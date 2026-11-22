@@ -14,7 +14,7 @@ The market is a Lattice chain, `Nexus/testnet/lodger-3129cc`. Its path keeps an 
 
 There is no server. Hosts write offers to the market chain, and buyers write orders that pay hosts. The web app and the seller read the same records and judge them with the same code (`client/verdict.mjs`), so they reach the same verdicts.
 
-Every record is read by CID from a block the node names. Every value is checked by fingerprint back to your app's first block. One host alone can still serve old or made-up data; read from two or more hosts, and only data two of them hold is shown. This needs the app to pin its genesis and read from two or more hosts (in lattice-sdk, `connect` with the app's `genesis` and a list of `nodes`; that option is in an upcoming lattice-sdk release). A node can also withhold records.
+Every record is read by CID from a block the node names. If your app pins its first block or a checkpoint, every value is checked against a block whose headers link back to it. One node alone can still serve old or made-up data; with two or more nodes run by different operators, a value is shown only from a block at least two of them report holding (in lattice-sdk, pass `connect` your app's `genesis` or a `checkpoint`, and a list of nodes). A node can also withhold records.
 
 ## The policy
 
@@ -156,7 +156,7 @@ Lattice checks both sides, so nobody holds the payment in between, and there is 
 
 ## The trust model
 
-**What checks catch.** Every value is checked by fingerprint back to your app's first block. One host alone can still serve old or made-up data; read from two or more hosts, and only data two of them hold is shown. This needs the app to pin its genesis and read from two or more hosts (in lattice-sdk, `connect` with the app's `genesis` and a list of `nodes`; that option is in an upcoming lattice-sdk release). With that, or on your own node, a host can't pass off:
+**What checks catch.** If your app pins its first block or a checkpoint, every value is checked against a block whose headers link back to it. One node alone can still serve old or made-up data; with two or more nodes run by different operators, a value is shown only from a block at least two of them report holding (in lattice-sdk, pass `connect` your app's `genesis` or a `checkpoint`, and a list of nodes). With that, or on your own node, a host can't pass off:
 
 - its records, or anyone else's: every record is checked against its CID;
 - a verdict: every reader judges the same bytes the same way;

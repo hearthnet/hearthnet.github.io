@@ -121,7 +121,7 @@ When paid time ends, a host may stop hosting your chain and drop its data. Anyon
 
 ## Check a host
 
-By default the page reads from one public testnet node. Every value is checked by fingerprint back to your app's first block. One host alone can still serve old or made-up data; read from two or more hosts, and only data two of them hold is shown. This needs the app to pin its genesis and read from two or more hosts (in lattice-sdk, `connect` with the app's `genesis` and a list of `nodes`; that option is in an upcoming lattice-sdk release). One node can also withhold records. Burns and block reads come from the node's API.
+By default the page reads from one public testnet node. If your app pins its first block or a checkpoint, every value is checked against a block whose headers link back to it. One node alone can still serve old or made-up data; with two or more nodes run by different operators, a value is shown only from a block at least two of them report holding (in lattice-sdk, pass `connect` your app's `genesis` or a `checkpoint`, and a list of nodes). One node can also withhold records. Burns and block reads come from the node's API.
 
 To trust only yourself, run a node that hosts the market and open the page with:
 

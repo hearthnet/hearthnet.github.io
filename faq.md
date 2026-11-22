@@ -96,7 +96,7 @@ The page reads back at most 1000 blocks. On a chain fast enough to have more in 
 
 ### Can a host fake its blocks?
 
-Not on your own node. Each block proves its work and names who it credits; your node checks both. Elsewhere: every value is checked by fingerprint back to your app's first block. One host alone can still serve old or made-up data; read from two or more hosts, and only data two of them hold is shown. This needs the app to pin its genesis and read from two or more hosts (in lattice-sdk, `connect` with the app's `genesis` and a list of `nodes`; that option is in an upcoming lattice-sdk release). Your own node is the simplest check.
+Not on your own node. Each block proves its work and names who it credits; your node checks both. Elsewhere: if your app pins its first block or a checkpoint, every value is checked against a block whose headers link back to it. One node alone can still serve old or made-up data; with two or more nodes run by different operators, a value is shown only from a block at least two of them report holding (in lattice-sdk, pass `connect` your app's `genesis` or a `checkpoint`, and a list of nodes). Your own node is the simplest check.
 
 ### What if a host stops making blocks?
 
