@@ -53,7 +53,7 @@ On **Launch a chain**, under **1. Your chain**:
 | Field | What it does |
 |---|---|
 | Name | Lowercase letters, digits and dashes, up to 40, starting with a letter or digit. The chain's path is the offer's parent plus this name, for example `Nexus/testnet/my-app`. |
-| Size | A preset. **Small app**: 10 s blocks, 100 kB blocks, 100 kB state growth, 100 transactions per block. **Busy app**: 5 s blocks, 1,000 kB blocks, 1 MB state growth, 1,000 transactions per block. |
+| Size | A preset. **Small app**: 30 s blocks, 20 kB blocks, 10 kB state growth, 100 transactions per block (what a host sells by default). **Busy app**: 5 s blocks, 1,000 kB blocks, 1 MB state growth, 1,000 transactions per block. |
 | Coin you start with | Paid to your account in the genesis. Writes pay fees from it, unless a sponsor pays them. Rounded up to a multiple of 100, the block reward. Default 21,000. |
 | Who can write | A rules preset: **Anyone can write** (any key); **Each person edits only their own keys** (every key ends with its writer's address); **Append-only (write once)** (anyone adds a key, nobody changes it after); or **Upload your own .wasm** (your own policy modules). |
 
@@ -121,7 +121,7 @@ When paid time ends, a host may stop hosting your chain and drop its data. Anyon
 
 ## Check a host
 
-By default the page reads from a public testnet node. That node can't forge a record: every market record is checked against its CID. But it can withhold records or serve an old tip. Burns and block reads come from the node's API.
+By default the page reads from one public testnet node. Every value is checked by fingerprint back to your app's first block. One host alone can still serve old or made-up data; read from two or more hosts, and only data two of them hold is shown. This needs the app to pin its genesis and read from two or more hosts (in lattice-sdk, `connect` with the app's `genesis` and a list of `nodes`; that option is in an upcoming lattice-sdk release). One node can also withhold records. Burns and block reads come from the node's API.
 
 To trust only yourself, run a node that hosts the market and open the page with:
 

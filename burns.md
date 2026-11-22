@@ -51,7 +51,7 @@ It sends a transfer of 300 from the seller's key to its burn address on that cha
 Or let the seller top up while it sells:
 
 ```
-hearth sell --price 100/day --burn 5000
+hearth sell --burn 5000
 ```
 
 `--burn <coin>` burns until the burned total for your key reaches `<coin>`. It sends only what the total is missing, and nothing once the total is reached, whoever burned it. Running it again never burns again. `--burn-chain <path>` picks the chain; the default is the market.

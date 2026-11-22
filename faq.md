@@ -22,6 +22,10 @@ No. The rules are part of the chain's spec, which is fixed in its genesis at lau
 
 No. Everything on a chain is public. Anyone can read it from any node that hosts it.
 
+### Why would anyone host?
+
+To earn Hearth coin, the market's coin, which pays for hosting and storage from any seller. A host earns it two ways: buyers' orders pay its seller key, and the market blocks it makes pay its sponsor's key (1,000 coin a block). See [Why host](sell.md#why-host).
+
 ### Is this on mainnet?
 
 No. Hearth runs on testnet only.
@@ -92,7 +96,7 @@ The page reads back at most 1000 blocks. On a chain fast enough to have more in 
 
 ### Can a host fake its blocks?
 
-Not on your own node. Each block proves its work and names who it credits; your node checks both. A node you don't run can misreport block data, so read from your own.
+Not on your own node. Each block proves its work and names who it credits; your node checks both. Elsewhere: every value is checked by fingerprint back to your app's first block. One host alone can still serve old or made-up data; read from two or more hosts, and only data two of them hold is shown. This needs the app to pin its genesis and read from two or more hosts (in lattice-sdk, `connect` with the app's `genesis` and a list of `nodes`; that option is in an upcoming lattice-sdk release). Your own node is the simplest check.
 
 ### What if a host stops making blocks?
 

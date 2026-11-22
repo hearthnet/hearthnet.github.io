@@ -23,9 +23,9 @@ Hearth runs on testnet only.
 - [Launch a chain](launch.md): pick a host, pay, renew, and check the host.
 - [FAQ](faq.md): what Hearth does not do.
 
-**Hosts** who run a Lattice node and want to be paid to host chains on it.
+**Hosts** who run a Lattice node and want to be paid to host chains on it. A host earns Hearth coin (the market's coin) from buyers' orders and from the blocks it makes, and spends it on hosting or storage from any seller.
 
-- [Sell hosting](sell.md): one command, `hearth sell --price 100/day`.
+- [Sell hosting](sell.md): one command, `hearth sell`.
 - [Burns](burns.md): put coin at stake so new buyers can judge you.
 - [Blocks and mining](mining.md): the blocks a host makes, where their rewards go, and how buyers check them.
 - [CLI reference](cli.md): every subcommand and flag.
