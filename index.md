@@ -12,7 +12,7 @@ Hearth is a hosting market for app chains. You hire anyone to host your app's ch
 
 There is no Hearth server. The market is itself a chain, `Nexus/testnet/lodger-3129cc`, on [Lattice](https://lattice.build/docs/), the chain Hearth runs on. The web app reads the market from any node that hosts it and checks every record against its CID.
 
-Hosts only host. A chain's blocks come from whoever mines it or commits it on its parent. A host may also claim to mine the chains it sells; see [Mining](mining.md).
+Hosts also make their chains' blocks. Every host makes zero-work blocks (about one hash each) on the market and on every chain it hosts, one per target block time, so a chain lives without miners. Each host also runs a sponsor, so your visitors can write and store with a few seconds of proof-of-work instead of coin. Anyone else may mine a chain too, for its block reward. See [Blocks and mining](mining.md).
 
 Hearth runs on testnet only.
 
@@ -25,9 +25,9 @@ Hearth runs on testnet only.
 
 **Hosts** who run a Lattice node and want to be paid to host chains on it.
 
-- [Sell hosting](sell.md): one command, `npx @hearthnet/hearth sell --price 100/day`.
+- [Sell hosting](sell.md): one command, `hearth sell --price 100/day`.
 - [Burns](burns.md): put coin at stake so new buyers can judge you.
-- [Mining](mining.md): claim a hashrate on the chains you sell.
+- [Blocks and mining](mining.md): the blocks a host makes, where their rewards go, and how buyers check them.
 - [CLI reference](cli.md): every subcommand and flag.
 
 **Everyone**
@@ -36,4 +36,10 @@ Hearth runs on testnet only.
 
 ## Source
 
-The code is at [github.com/hearthnet/hearth](https://github.com/hearthnet/hearth). The package is `@hearthnet/hearth` and needs Node.js 22 or later.
+The code is at [github.com/hearthnet/hearth](https://github.com/hearthnet/hearth). The package is `@hearthnet/hearth` and needs Node.js 22 or later. It is not on npm yet; install it from source:
+
+```
+git clone https://github.com/hearthnet/hearth && npm i -g ./hearth
+```
+
+(`npx @hearthnet/hearth` soon.)

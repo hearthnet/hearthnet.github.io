@@ -43,7 +43,7 @@ Each chain's coin is its own. The web app shows burns per chain and never adds t
 From the seller's key, burn now with `hearth burn`:
 
 ```
-npx @hearthnet/hearth burn 300 --chain Nexus/testnet
+hearth burn 300 --chain Nexus/testnet
 ```
 
 It sends a transfer of 300 from the seller's key to its burn address on that chain. It prints the transaction and the burned total. It refuses a chain off the path from Nexus to the market. It reads the key from `<root>/hearth/seller.json`, or `--key`, and does not make one.
@@ -51,7 +51,7 @@ It sends a transfer of 300 from the seller's key to its burn address on that cha
 Or let the seller top up while it sells:
 
 ```
-npx @hearthnet/hearth sell --price 100/day --burn 5000
+hearth sell --price 100/day --burn 5000
 ```
 
 `--burn <coin>` burns until the burned total for your key reaches `<coin>`. It sends only what the total is missing, and nothing once the total is reached, whoever burned it. Running it again never burns again. `--burn-chain <path>` picks the chain; the default is the market.

@@ -1,72 +1,46 @@
 ---
-title: Mining
+title: Blocks and mining
 ---
 
 {% include nav.html %}
 
-# Mining
+# Blocks and mining
 
-This page explains how a host can claim to mine the chains it sells, and how a buyer checks that claim on their own node.
+This page explains who makes a hosted chain's blocks, where the rewards go, and how a buyer checks that a host makes them.
 
-## Why mining needs hosting
+## Hosts make zero-work blocks
 
-A chain's blocks come from whoever mines it or commits it on its parent. Hosting doesn't make blocks.
+Every seller makes blocks on the market and on every chain it hosts for its orders. Each is a zero-work block: about one hash, made with the seller's processor. There is no flag; the seller always does it.
 
-A Lattice miner merged-mines the chains its node hosts: the node carries each hosted chain's next block in its templates for the parent. A host's node already hosts the chains it sells, so a host that runs a miner can mine them too. That is why mining fits in a hosting offer, as an optional extra.
+The seller paces each chain: a chain is due once its tip is one target block time (`targetBlockTime`, from the chain's spec) old, from anyone's block. Then the seller asks its node for a template, searches nonces up to that chain's target, and submits the hit. So a chain gets about one block per target block time with no miner at all. A chain that other miners or other hosts keep moving needs nothing from the seller. A chain the node is still syncing is never paced, and after a miss a chain waits its whole target block time.
 
-## The claim
+**Early blocks.** A template carries every chain the node hosts, and one hash makes a block on each chain whose target it clears. The seller skips a hash that would also clear a harder chain not yet due. It can't keep a hash off an easier chain not yet due, since any hash that clears the due chain clears that one too. So an easier chain can get some early blocks today. ASERT difficulty adjustment hardens it back toward its target block time. A per-chain `exclude` in template requests, in a coming Lattice node release, will fix this.
 
-A host that mines can say so in its offer:
+## Rewards go to the sponsor's key
 
-```
-npx @hearthnet/hearth sell --price 100/day --mine 1TH/s
-```
+Every block the seller makes pays its sponsor's key (`<root>/hearth/sponsor.json`), on every chain in the template, never the seller's key. That key funds the sponsor: it pays the write fees of visitors who pay with proof-of-work instead of coin.
 
-`--mine` takes hashes per second: `1TH/s`, `500GH/s`, or a plain whole number. Units run from `kH/s` to `EH/s`. With an offer file, put `"mines"` in the file instead.
+To move rewards above a float to the seller's address, run `hearth sweep` with the seller stopped. See [Rewards](sell.md#rewards-hearth-sweep).
 
-It adds a last line `mines <hashes per second>` to the offer. An offer without it reads exactly as before: the same flags without `--mine` name the same offer, with the same id.
+Each hosting offer names the address its blocks pay, as its line `blocks <address>`.
 
-## The miner configuration
+## Anyone can mine
 
-The seller runs no miner. With `--mine`, it prints the miner entries that credit the seller's address on the chains it sells. It prints them again whenever the chains it owes change.
+Anyone else may mine a hosted chain too, for its block reward. A Lattice miner merged-mines the chains its node hosts. A buyer who wants the rewards of their own chain can mine it.
 
-Add the entries to the `recipients` of your miner's `<root>/miner.json`, beside your own:
+## How a buyer checks the blocks
 
-```json
-{ "recipients": { "Nexus": "<your address>", "Nexus/testnet/app-1": "<seller address>" } }
-```
+The web app checks, from the buyer's browser, that a host makes its chains' blocks (`client/service.mjs`):
 
-Each entry is one exact chain path. There are no wildcards, so each owed chain needs its own entry. A chain left out of `recipients` burns its block reward and fees. The miner reads the file again before every round.
+- **serving**: the offer's `blocks` address is credited on the chain within the last max(24 hours, 10 target block times). The blocks are read from the node the page reads from (`?node=`), by CID along their parent links, from the tip back. The read stops at 1000 blocks: on a chain fast enough to have more in that window, a check that finds no credit before the cap says *unknown*, not that the host is not serving.
+- **live**, separately: the chain has a block, from anyone, within its last three target block times.
 
-## How credited hashrate is computed
+Every clock comparison allows two minutes of slack, since block timestamps are the miner's clock.
 
-Every block names its `rewardRecipient` and proves, on average, this many hashes of work:
+The **Hosts** tab shows *Makes its chains' blocks* for up to three chains a host is paid to run. On your own chain's page, under **Use it**, the app says for each host you ordered from whether it made a block in the window, and whether the chain has a recent block.
 
-```
-work = 2^256 / (target + 1)
-```
+Open the web app with `?node=<your node's read URL>` to read the blocks from your own node. Your node checks every block's work and recipient.
 
-The buyer's node checks every block's work, target and recipient.
+## Old mining claims
 
-On the **Hosts** tab, for each chain you bought at a host with this browser's account, and that it still owes, the web app reads the chain's recent blocks from its node. It sums the work of the blocks crediting the host, and divides by the window's length:
-
-```
-hashrate = sum of work crediting the host / seconds in the window
-```
-
-The window is the last day or the last 100 blocks, whichever has fewer blocks:
-
-- If the last day has fewer than 100 blocks, the window is the last 24 hours, up to now.
-- Otherwise it is the newest 100 blocks, from the oldest one's timestamp to the newest one's. The oldest block's work is left out, since it was done before the window opened.
-
-A block with no recipient (its reward burned) counts toward the chain's total only.
-
-The page shows the credited rate next to the host's claim, from its newest offer that makes one: for example `Nexus/testnet/app-1: 950 GH/s credited of 1 TH/s claimed`.
-
-Block timestamps are set by whoever mines. Over a short window the rate is noisy. Read it over time, not from one look.
-
-Open the web app with `?node=<your node's read URL>` to read the blocks from your own node. The block data comes from the node's API, so read it from a node you trust.
-
-## A claim, not a contract
-
-Nothing on the market enforces `mines`. Verdicts never read it, and no payment depends on it. If a host mines less than it claims, the only recourse is not to renew.
+Older offers could claim a hashrate with a line `mines <hashes per second>`. That line still parses, and the **Hosts** tab still shows it, but nothing writes it any more. For a host with such a claim, on chains you bought there, the page shows the hashrate the chain's blocks credit the host over the last day or 100 blocks, beside the claim. A claim was never enforced: verdicts never read it.

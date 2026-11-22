@@ -36,11 +36,19 @@ The page shows it: the order stays *owed* but not *Launched*, and the host's *Se
 
 ### Does the host make my chain's blocks?
 
-No. Hosts only host. Your chain's blocks come from whoever mines it or commits it on its parent, for its block reward. That can be a miner, the host's own miner, or you.
+Yes. Every host makes zero-work blocks, about one per target block time, on each chain it hosts, so your chain lives without miners. Anyone else may mine it too, you included. See [Blocks and mining](mining.md).
 
 ### Who gets my chain's mining rewards?
 
-Whoever makes its blocks.
+Whoever makes its blocks. A host's blocks pay its sponsor's key, which spends them on your visitors' write fees.
+
+### Do my visitors need coin to write?
+
+No, if your hosts run a public sponsor. The sponsor pays the write fee, and the visitor's device does a few seconds of proof-of-work instead. Without a sponsor, the writer needs coin on your chain.
+
+### Can a host change its price after I pay?
+
+No. Each payment is priced by the offer version in force at its own height, and a new version takes effect only 10 market blocks after it is written.
 
 ### Can someone take my chain's name?
 
@@ -72,20 +80,20 @@ Each chain's coin is its own. Nexus coin, testnet coin and market coin aren't wo
 
 No. It burns only what the burned total is missing, up to the amount. Once the total is reached, by anyone, it burns nothing.
 
-## Mining
+## Blocks
 
-### What does a host's `mines` claim promise?
+### How do I check that a host makes my chain's blocks?
 
-Nothing on the market enforces it. It is a claim, not a contract. See [Mining](mining.md).
+On the **Hosts** tab and on your chain's page, the web app looks for a block paying the host's `blocks` address within max(24 hours, 10 target block times). Open it with `?node=<your node's read URL>` to read the blocks from your own node. See [Blocks and mining](mining.md#how-a-buyer-checks-the-blocks).
 
-### How do I check it?
+### Why does a check say "unknown"?
 
-On the **Hosts** tab, the web app shows the hashrate your chains' blocks credit the host, over the last day or the last 100 blocks, whichever has fewer. Open it with `?node=<your node's read URL>` to read the blocks from your own node.
+The page reads back at most 1000 blocks. On a chain fast enough to have more in the window, a check that finds no block from the host before that cap says *unknown*, not that the host is not serving.
 
-### What if a host mines less than it claims?
+### Can a host fake its blocks?
+
+Not on your own node. Each block proves its work and names who it credits; your node checks both. A node you don't run can misreport block data, so read from your own.
+
+### What if a host stops making blocks?
 
 Don't renew. That is the only recourse.
-
-### Can a host fake the credited hashrate?
-
-Not on your own node. Each block proves its work, `2^256 / (target + 1)` hashes on average, and names who it credits; your node checks both. A node you don't run can misreport block data, so read from your own.

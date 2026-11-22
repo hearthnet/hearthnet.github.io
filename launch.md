@@ -6,11 +6,11 @@ title: Launch a chain
 
 # Launch a chain
 
-This page shows how to launch your app's chain from the Hearth web app, keep it running, and check its host.
+This page shows how to launch your app's chain from the Hearth web app, keep it running, and check its hosts.
 
-You don't run a node. You buy market coin, pay a host for some periods, and the host builds your chain's genesis from your spec, stores it and serves it at its URL.
+You don't run a node. You buy market coin, pay one or more hosts for some periods, and each host builds your chain's genesis from your spec, stores it, serves it at its URL and makes its blocks.
 
-The host makes no blocks. Your chain's blocks come from whoever mines it or commits it on its parent, for its block reward. That can be the host's own miner (see [Mining](mining.md)), another miner, or you.
+Each host makes your chain's blocks: zero-work blocks, about one per target block time, so the chain lives without miners. Each host also runs a sponsor, so your visitors can write with a few seconds of their device's work instead of coin. Anyone else may mine your chain too. See [Blocks and mining](mining.md).
 
 ## The web app
 
@@ -48,31 +48,33 @@ See [How it works](how-it-works.md#buying-coin) for the deposit, receipt and wit
 
 ## 2. Describe your chain
 
-On **Launch a chain**:
+On **Launch a chain**, under **1. Your chain**:
 
 | Field | What it does |
 |---|---|
 | Name | Lowercase letters, digits and dashes, up to 40, starting with a letter or digit. The chain's path is the offer's parent plus this name, for example `Nexus/testnet/my-app`. |
-| Size | **Small app**: 10 s blocks, 100 kB blocks, 100 kB state growth, 100 transactions per block. **Busy app**: 5 s blocks, 1,000 kB blocks, 1 MB state growth, 1,000 transactions per block. |
-| Coin you start with | Paid to your account in the genesis. It pays the fees for writes on your chain. Rounded up to a multiple of 100, the block reward. Default 21,000. |
-| Rules (policy modules) | WASM policy modules for your chain. Leave it empty for a chain anyone can write any key to. |
+| Size | A preset. **Small app**: 10 s blocks, 100 kB blocks, 100 kB state growth, 100 transactions per block. **Busy app**: 5 s blocks, 1,000 kB blocks, 1 MB state growth, 1,000 transactions per block. |
+| Coin you start with | Paid to your account in the genesis. Writes pay fees from it, unless a sponsor pays them. Rounded up to a multiple of 100, the block reward. Default 21,000. |
+| Who can write | A rules preset: **Anyone can write** (any key); **Each person edits only their own keys** (every key ends with its writer's address); **Append-only (write once)** (anyone adds a key, nobody changes it after); or **Upload your own .wasm** (your own policy modules). |
+
+Each block pays 100 coin on your chain to whoever makes it. A host's blocks pay its sponsor, which spends it on your visitors' write fees.
 
 The rules are fixed at launch: they are part of the genesis.
 
-## 3. Choose a host
+## 3. Choose hosts
 
-The page lists the offers that take your chain. An offer is listed when:
+Under **2. Hosts** the page lists the offers that take your chain, one per host (its cheapest with room). An offer is listed when:
 
 - its host is **Verified** or **Key only** (below);
 - it ends more than 16 market blocks from now;
 - your chain's size is within its limits;
 - it runs your policy modules, or any.
 
-The cheapest per block comes first. A full offer is shown but can't be chosen.
+The cheapest per block comes first. You can tick more than one host; each is paid separately. A full offer is shown but can't be chosen, and nor can an offer under another parent than the first you chose.
 
 | Column | What it shows |
 |---|---|
-| Host | The domain of a verified host, or the start and end of a key-only host's address, marked *Key only*. |
+| Host | The domain of a verified host, or the start and end of a key-only host's address, marked *Key only*. *Says it makes blocks* and *Says it sponsors writes* when its offer names a `blocks` address and a `sponsor`. |
 | Price | Market coin per period. |
 | Room | Chains the offer can still sell, of how many. |
 | Record | Chains the host has sold, and how many it was *paid, not served*. |
@@ -83,13 +85,11 @@ A key-only host names no URL, so the page can't probe it or show you where to re
 
 **Burns.** The **Hosts** tab shows the coin burned for each host, on each chain from Nexus down to the market, chain by chain. A new host with no record shows its burns in place of a record. A burn costs whoever made it. It says nothing about how a host serves. See [Burns](burns.md).
 
-**Mining claims.** An offer may claim a hashrate on the chains it sells. The **Hosts** tab shows the claim, and on your own chains the hashrate their blocks credit the host. See [Mining](mining.md).
-
 ## 4. Pay and launch
 
-Set **Periods** (default 7). The cost is the offer's price times the periods. You need that plus the fee.
+Set **Periods** (default 7). The cost is each offer's price times the periods, summed over the hosts you chose. You need that plus the fee.
 
-Press **Launch**. The page checks the name first: it refuses a path that is already a chain on the parent, or that someone else has ordered at this host. Then it writes your order and pays the host in one transaction.
+Press **Launch**. The page reads the market again first, and stops if an offer you chose is gone, has closed, is full, or has new terms since you chose it: check your hosts and launch again. It refuses a path that is already a chain on the parent, or that someone else has ordered at one of these hosts. It also refuses to pay twice: if your account already has an order for this path at one of these hosts (a payment that landed), it says so. Then it writes one transaction that orders your chain at every chosen host and pays each one, priced by the offer version in force at the market's height.
 
 Your chain's page then shows three steps:
 
@@ -101,19 +101,27 @@ Paid time counts from the order's own block. The host owes the chain from the or
 
 If the order is void, or the host was full, or the path was taken, the page says why. See [Verdicts](how-it-works.md#settlement-and-verdicts).
 
-Once launched, the page shows where to read and write: the host's URL, with `?chainPath=<your path>`.
+## 5. Use it
 
-## 5. Renew
+Once launched, **Use it** shows where to read and write (the host's read URL), the chain's height and latest block, and whether each host you ordered from made a block of it lately (see [Blocks and mining](mining.md#how-a-buyer-checks-the-blocks)).
 
-Anyone can pay for more time. On your chain's page, under **Keep it running**, set the periods and press **Pay for more**. This writes a `renew` order that pays the host.
+**Test write** writes one key to your chain and reads it back, checking what it reads against the chain. When your hosts name sponsors, they pay the write fee: the writer's device does a few seconds of work instead. Otherwise the writer needs coin on your chain.
 
-Time past the offer's end is never owed. The page warns you when the offer ends before your paid time would.
+The code to paste into your own page appears here once a release of the SDK is tagged. Test write works now.
+
+## 6. Renew
+
+Anyone can pay for more time. On your chain's page, under **Keep it running**, set the periods and press **Pay for more**. This writes a `renew` order that pays the host, priced by the offer version in force. If the offer's price or period changed since the page loaded, it stops and asks you to reload.
+
+Offers sell for 30 days at a time, and a host extends one by writing it again. Time past the offer's end is never owed. The page warns you when the offer ends before your paid time would. A closed offer sells no more time.
 
 There are no refunds. If a host serves badly, don't renew.
 
-## Check hosts on your own node
+When paid time ends, a host may stop hosting your chain and drop its data. Anyone still hosting it keeps it.
 
-By default the page reads from a public testnet node. That node can't forge a record: every market record is checked against its CID. But it can withhold records or serve an old tip. Burns and credited hashrate come from the node's API, not from records checked by CID.
+## Check a host
+
+By default the page reads from a public testnet node. That node can't forge a record: every market record is checked against its CID. But it can withhold records or serve an old tip. Burns and block reads come from the node's API.
 
 To trust only yourself, run a node that hosts the market and open the page with:
 
@@ -121,7 +129,7 @@ To trust only yourself, run a node that hosts the market and open the page with:
 ?node=<your node's read URL>
 ```
 
-Then the market, burns and your chains' blocks all come from your node. The **Serving now** probes still go to each host's URL, since that is what they test.
+Then the market, burns and your chains' blocks all come from your node. The **Serving now** probes still go to each host's URL, and the **Listed by its sponsor** check to its sponsor's URL, since that is what they test. That sponsor sees your browser's IP address.
 
 On **Hosts**, each host shows:
 
@@ -130,10 +138,10 @@ On **Hosts**, each host shows:
 | Verified / Key only / Not verified | Whether its domain lists its address. |
 | Burned | Coin burned for it, per chain, as read from the node. |
 | Serving now | Of the chains it owes, how many it serves with the right genesis, checked from your browser. |
+| Listed by its sponsor | The sponsor its offer names (an `https` URL, or loopback) answers `GET /terms` bound to this host: the sponsor's own address is the offer's `blocks` address, and it pays this host. This checks the host is up and consistent, not that it hosts anything. |
+| Makes its chains' blocks | Of up to three chains it is paid to run, how many have a block paying its `blocks` address within max(24 hours, 10 target block times). *Unknown* when the chain made more blocks in that window than the 1000 the page reads back. |
 | Paid, not served | Orders it took after its offer was full, or for a path it had given to another chain. |
 | Void | Orders whose buyer broke the offer's terms. |
-| Mines | Each offer's mining claim, if any. |
-| Your chains | On chains you bought there, the hashrate their blocks credit the host, against its claim. |
 
 "Serving now" measures availability now. It does not prove the host stores the chain, and it is not a record of past uptime.
 
