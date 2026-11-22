@@ -1,0 +1,10 @@
+title: Hearth docs
+description: Hire anyone to host your app's chain, and check every read yourself.
+theme: jekyll-theme-primer
+plugins:
+  - jekyll-relative-links
+relative_links:
+  enabled: true
+  collections: false
+exclude:
+  - README.md
