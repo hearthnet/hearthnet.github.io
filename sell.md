@@ -117,7 +117,7 @@ You don't have to fund it. The seller's blocks pay the sponsor's key (1,000 mark
 moving 4 market coin of the sponsor key's block rewards to the seller's key for its first writes (lattice-sponsor starts once it has landed)
 ```
 
-Until the sponsor's key holds that much, it says it is waiting for block rewards, and how to skip the wait.
+It moves them once the sponsor's key holds five fees: the four it moves, and the fee for the move itself. Until then, it says it is waiting for block rewards, and how to skip the wait. If any lattice-sponsor already answers on `--sponsor-port` (one you started yourself could sign with the same key), it moves nothing, and says so.
 
 With `--node` (no sponsor beside it), or once an offer of yours is out, it moves nothing. If the key is short then, it prints:
 
@@ -141,12 +141,12 @@ Each pass prints, and `hearth status` prints once:
 
 ```
 market Nexus/testnet/lodger-3129cc at block 12561: the seller's key <address> holds 297; the sponsor's key <address> holds 52000 (its block rewards)
-2 orders {"owed":1,"pending":1} and 0 renewals: earned 70000 coin, 70000 more settling
+2 orders {"owed":1,"pending":1} and 0 renewals: earned 70000 coin from buyers, 70000 more settling
 owes hosting to Nexus/testnet/app1 (to market block 14001)
 storage pinned by the sponsor: 12.0 MiB of its 256.0 MiB budget, 1.0 MiB held for uploads being paid, 243.0 MiB left
 ```
 
-*Earned* is what buyers paid your key in orders and renewals that have settled (16 market blocks); *settling* is what they paid in ones that have not. The storage line comes from the sponsor's `GET /terms`: what it has pinned, what it holds for uploads still being paid, and what is left of the budget.
+*Earned* is what other buyers paid your key for hosting you owe or owed: settled orders (16 market blocks) judged *owed*, and settled renewals of those chains that bought time (not ones after a close). Void, full and taken orders, and your own orders, count in neither. *Settling* is what buyers paid in orders and renewals that have not settled yet. `hearth status` never waits: if the market isn't synced it says `market not synced (height X of Y)`, and each read has a deadline. With `--node`, the storage line is skipped, since the sponsor runs beside the remote node. The storage line comes from the sponsor's `GET /terms`: what it has pinned, what it holds for uploads still being paid, and what is left of the budget.
 
 ## Offers: 30 days, versions, no auto-renew
 

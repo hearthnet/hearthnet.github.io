@@ -83,7 +83,7 @@ An offer sells for 30 days. Run `hearth sell` again to extend it: there is no au
 
 ## hearth status
 
-Prints once what the seller prints each pass: both keys' balances on the market, the seller's orders by verdict and its renewals, the coin they paid (settled, and still settling), the chains it owes hosting to and until which market block, the storage its sponsor has pinned against the budget, and whether a seller runs beside the node.
+Prints once, without waiting (each read has a deadline; an unsynced market prints `market not synced (height X of Y)`), what the seller prints each pass: both keys' balances on the market, the seller's orders by verdict and its renewals, the coin they paid (settled, and still settling), the chains it owes hosting to and until which market block, the storage its sponsor has pinned against the budget, and whether a seller runs beside the node.
 
 ```
 hearth status [--market Nexus/testnet/lodger-3129cc] [--root <node root> | --node <url> --token-file <file>] [--key <file>]

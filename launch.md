@@ -53,7 +53,7 @@ On **Launch a chain**, under **1. Your chain**:
 | Field | What it does |
 |---|---|
 | Name | Lowercase letters, digits and dashes, up to 40, starting with a letter or digit. The chain's path is the offer's parent plus this name, for example `Nexus/testnet/my-app`. |
-| Size | A preset. **Small app**: 30 s blocks, 20 kB blocks, 10 kB state growth, 100 transactions per block (what a host sells by default). **Busy app**: 5 s blocks, 1,000 kB blocks, 1 MB state growth, 1,000 transactions per block. |
+| Size | A preset. **Small app**: 30 s blocks, 20 kB blocks, 10 kB state growth, 100 transactions per block (what a host sells by default). **Busy app (needs a seller with bigger limits)**: 5 s blocks, 1,000 kB blocks, 1 MB state growth, 1,000 transactions per block. No seller's default offer fits it; it fits only offers whose limits are at least this big. |
 | Coin you start with | Paid to your account in the genesis. Writes pay fees from it, unless a sponsor pays them. Rounded up to a multiple of 100, the block reward. Default 21,000. |
 | Who can write | A rules preset: **Anyone can write** (any key); **Each person edits only their own keys** (every key ends with its writer's address); **Append-only (write once)** (anyone adds a key, nobody changes it after); or **Upload your own .wasm** (your own policy modules). |
 
