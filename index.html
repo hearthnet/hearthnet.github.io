@@ -375,170 +375,209 @@
 </footer>
 
 <script>
-/* The page's ground: one quiet swarm of hosts across the whole landing page.
-   Hosts live in page coordinates and scroll with it; a fixed canvas draws the
-   ones on screen, multiplied onto whatever ground is beneath, and keeps clear
-   of every block of words, button and panel. A write passes host to host; now
-   and then a host goes dark and another lights elsewhere, copying from a
-   neighbour. No words, nothing to click. */
+/* The page's ground: one quiet swarm of hosts across the landing page, each
+   holding the whole app. A write passes host to host; now and then a host goes
+   dark and another lights nearby, copying from a neighbour. No words.
+
+   Cost: every geometric question (is this point clear of the page's words and
+   panels?) is answered once, when a host is placed or linked, against blocks
+   indexed by row, and remeasured only when the layout changes. A frame then only
+   moves and stamps the hosts on screen with one pre-drawn glow: at 30 fps at
+   rest, every frame while the page scrolls, never in a hidden tab. */
 (function () {
   const canvas = document.getElementById("page-swarm");
   if (!canvas || !canvas.getContext) return;
   const ctx = canvas.getContext("2d");
   const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const KEEP = "h1,h2,h3,p,li,pre,table,a.btn,button,.pill,.frame,.panel,.ui,.hero__window,.faq__item h3,.footer__col,.nav__logo,.footer__legal,.link,.step-num";
-  let W = 0, H = 0, D = 0, Y = 0, navH = 0, rects = [], ember = "232,89,12", ink = "43,36,32";
-  let hosts = [], pulses = [], version = 0, t = 0, running = false, last = 0, pointer = null;
-  let nextWrite = 1.2, nextChange = 5, nextMeasure = 1;
+  const KEEP = "h1,h2,h3,p,li,pre,table,a.btn,button,.pill,.frame,.panel,.ui,.hero__window,.footer__col,.nav__logo,.footer__legal,.link,.step-num";
+  const PAD = 36, ROW = 160, REACH = 420;              // clearance, row height of the block index, link reach
   const rand = (a, b) => a + Math.random() * (b - a);
-  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-  const on = () => hosts.filter((h) => h.state === "on");
 
-  function rgb(v, d) { const m = /#?([0-9a-f]{6})/i.exec(v || ""); if (!m) return d; const n = parseInt(m[1], 16); return `${n >> 16},${(n >> 8) & 255},${n & 255}`; }
-  // every block to keep clear, in page coordinates
+  let W = 0, H = 0, D = 0, navH = 0, rows = new Map(), ink = "43,36,32";
+  let hosts = [], edges = [], pulses = [], version = 0, ids = 0;
+  let t = 0, last = 0, drawn = 0, lastY = -1, running = false, pointer = null;
+  let nextWrite = 1.2, nextChange = 5;
+
+  // ---- the page's blocks, indexed by row ----------------------------------------------------
   function measure() {
-    Y = scrollY; rects = [];
+    const Y = scrollY; rows = new Map();
     for (const el of document.querySelectorAll(KEEP)) {
       if (el.closest(".nav") && !el.matches(".nav__logo")) continue;
-      const r = el.getBoundingClientRect(); if (!r.width || !r.height) continue;
-      rects.push({ x0: r.left, x1: r.right, y0: r.top + Y, y1: r.bottom + Y });
+      const b = el.getBoundingClientRect(); if (!b.width || !b.height) continue;
+      const r = { x0: b.left, x1: b.right, y0: b.top + Y, y1: b.bottom + Y };
+      for (let k = Math.floor((r.y0 - PAD) / ROW); k <= Math.floor((r.y1 + PAD) / ROW); k++) (rows.get(k) || rows.set(k, []).get(k)).push(r);
     }
   }
-  // 0 on a block, rising to 1 some 36px clear of every block
+  // 0 on a block, rising to 1 once PAD clear of every block
   function room(x, y) {
-    let d = 36;
-    for (const r of rects) {
+    let d = PAD;
+    for (const r of rows.get(Math.floor(y / ROW)) || []) {
       const dx = Math.max(r.x0 - x, 0, x - r.x1), dy = Math.max(r.y0 - y, 0, y - r.y1);
-      if (dx < 36 && dy < 36) { d = Math.min(d, Math.hypot(dx, dy)); if (!d) return 0; }
+      if (dx < d && dy < d) { d = Math.min(d, Math.hypot(dx, dy)); if (!d) return 0; }
     }
-    return Math.min(1, Math.max(0, (d - 8) / 28));
+    return Math.min(1, Math.max(0, (d - 8) / (PAD - 8)));
   }
-  function size() {
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    W = innerWidth; H = innerHeight; D = document.documentElement.scrollHeight;
-    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const nav = document.querySelector(".nav"); navH = nav ? nav.getBoundingClientRect().height : 0;
-    const cs = getComputedStyle(document.documentElement);
-    ember = rgb(cs.getPropertyValue("--p-accent"), ember); ink = rgb(cs.getPropertyValue("--p-ink"), ink);
-    measure();
+  // the clearance of a link: its worst point, sampled every 24px (once, when linked)
+  function clearAlong(a, b) {
+    const n = Math.max(2, Math.ceil(Math.hypot(b.hx - a.hx, b.hy - a.hy) / 24));
+    let m = 1;
+    for (let i = 1; i < n && m > 0; i++) m = Math.min(m, room(a.hx + (b.hx - a.hx) * i / n, a.hy + (b.hy - a.hy) * i / n));
+    return m;
   }
+
+  // ---- one glow, drawn once ------------------------------------------------------------------
+  const glow = document.createElement("canvas");
+  function paintGlow(rgb) {
+    glow.width = glow.height = 64;
+    const g = glow.getContext("2d"), grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, `rgba(${rgb},1)`); grad.addColorStop(0.18, `rgba(${rgb},.9)`); grad.addColorStop(0.2, `rgba(${rgb},.32)`); grad.addColorStop(1, `rgba(${rgb},0)`);
+    g.fillStyle = grad; g.fillRect(0, 0, 64, 64);
+  }
+
+  // ---- hosts and the links between them ------------------------------------------------------
+  const host = (x, y, lit) => ({ id: ids++, hx: x, hy: y, x, y, ph: rand(0, 6.28), r: rand(1.3, 2.3), m: room(x, y), a: lit ? 1 : 0, state: lit ? "on" : "kindling", ver: lit ? version : -1, flash: 0, near: [] });
   function spot(y0, y1) {
     const gap = Math.max(54, W / 16);
-    for (let i = 0; i < 60; i++) {
-      const p = { x: rand(10, W - 10), y: rand(y0, y1) };
-      if (room(p.x, p.y) > 0.8 && hosts.every((h) => h.state === "gone" || dist(h, p) > gap)) return p;
+    for (let i = 0; i < 40; i++) {
+      const x = rand(10, W - 10), y = rand(y0, y1);
+      if (room(x, y) > 0.8 && !hosts.some((h) => Math.abs(h.hy - y) < gap && Math.hypot(h.hx - x, h.hy - y) < gap)) return [x, y];
     }
     return null;
   }
-  function make(p, lit) { return { x: p.x, y: p.y, hx: p.x, hy: p.y, ph: rand(0, 6.28), r: rand(1.3, 2.3), state: lit ? "on" : "kindling", a: lit ? 1 : 0, ver: lit ? version : -1, flash: 0, links: [] }; }
   function relink() {
-    const L = hosts.filter((h) => h.state !== "gone");
-    for (const h of L) h.links = L.filter((o) => o !== h && Math.abs(o.y - h.y) < 420).sort((a, b) => dist(h, a) - dist(h, b)).slice(0, 3);
+    hosts.sort((a, b) => a.hy - b.hy);
+    const seen = new Set(); edges = [];
+    for (let i = 0; i < hosts.length; i++) {
+      const h = hosts[i], near = [];
+      for (let j = i - 1; j >= 0 && h.hy - hosts[j].hy < REACH; j--) near.push(hosts[j]);
+      for (let j = i + 1; j < hosts.length && hosts[j].hy - h.hy < REACH; j++) near.push(hosts[j]);
+      near.sort((a, b) => Math.hypot(a.hx - h.hx, a.hy - h.hy) - Math.hypot(b.hx - h.hx, b.hy - h.hy));
+      h.near = near.slice(0, 3);
+      for (const o of h.near) {
+        const a = h.hy < o.hy ? h : o, b = a === h ? o : h, key = a.id * 4096 + b.id;
+        if (!seen.has(key)) { seen.add(key); edges.push({ a, b, m: clearAlong(a, b), top: a.hy - 10, bot: b.hy + 10 }); }
+      }
+    }
   }
-  function start() {
-    size(); hosts = []; pulses = [];
+  function build() {
+    hosts = []; pulses = [];
     const n = Math.max(24, Math.min(160, Math.round((W * D) / 26000)));
-    for (let i = 0; i < n * 3 && hosts.length < n; i++) { const p = spot(navH + 8, D - 8); if (p) hosts.push(make(p, true)); }
-    relink(); draw();
+    for (let i = 0; i < n * 3 && hosts.length < n; i++) { const p = spot(navH + 8, D - 8); if (p) hosts.push(host(p[0], p[1], true)); }
+    relink();
   }
-  const visible = (h, m = 0) => h.y - Y > navH - m && h.y - Y < H + m;
-  function send(from, ver) {
-    for (const to of from.links) if (to.state === "on" && to.ver < ver) pulses.push({ from, to, ver, k: 0, dur: Math.max(0.6, dist(from, to) / 110) });
-  }
-  function write() {
-    const L = on().filter((h) => visible(h)); if (!L.length) return;
-    const h = L[(Math.random() * L.length) | 0];
-    version++; h.ver = version; h.flash = 1; send(h, version);
-  }
-  // one host on screen goes dark; another lights nearby on screen and copies from a neighbour
+  function reclear() { for (const h of hosts) h.m = room(h.hx, h.hy); for (const e of edges) e.m = clearAlong(e.a, e.b); }
+
+  // hosts on screen: a binary search over hosts sorted by height
+  function firstAt(y) { let lo = 0, hi = hosts.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (hosts[mid].hy < y) lo = mid + 1; else hi = mid; } return lo; }
+  function onScreen(Y) { const out = []; for (let i = firstAt(Y + navH - 20); i < hosts.length && hosts[i].hy < Y + H + 20; i++) if (hosts[i].state === "on") out.push(hosts[i]); return out; }
+
+  // ---- what happens ----------------------------------------------------------------------------
+  function send(from, ver) { for (const to of from.near) if (to.state === "on" && to.ver < ver) pulses.push({ from, to, ver, k: 0, dur: Math.max(0.6, Math.hypot(to.hx - from.hx, to.hy - from.hy) / 110) }); }
+  function write() { const L = onScreen(scrollY); if (!L.length) return; const h = L[(Math.random() * L.length) | 0]; version++; h.ver = version; h.flash = 1; send(h, version); }
   function change() {
-    const L = on().filter((h) => visible(h));
+    const Y = scrollY, L = onScreen(Y);
     if (L.length > 3) L[(Math.random() * L.length) | 0].state = "fading";
     const p = spot(Y + navH + 8, Y + H - 8); if (!p) return;
-    const h = make(p, false); hosts.push(h); relink();
-    const src = on().sort((a, b) => dist(h, a) - dist(h, b))[0];
-    if (src) pulses.push({ from: src, to: h, ver: version, k: 0, dur: Math.max(0.8, dist(src, h) / 110) });
+    const h = host(p[0], p[1], false); hosts.push(h); relink();
+    const src = h.near.find((o) => o.state === "on");
+    if (src) pulses.push({ from: src, to: h, ver: version, k: 0, dur: 1 });
   }
-
   function step(dt) {
-    t += dt; Y = scrollY;
-    if ((nextMeasure -= dt) <= 0) { measure(); nextMeasure = 1.5; }
+    t += dt;
+    let gone = false;
     for (const h of hosts) {
-      let dx = 0, dy = 0;
-      if (pointer) { const px = pointer.x, py = pointer.y + Y, d = Math.hypot(h.hx - px, h.hy - py); if (d < 150) { const f = (1 - d / 150) * 9; dx = ((h.hx - px) / (d || 1)) * f; dy = ((h.hy - py) / (d || 1)) * f; } }
-      h.x += (h.hx + Math.sin(t * 0.22 + h.ph) * 5 + dx - h.x) * Math.min(1, dt * 3);
-      h.y += (h.hy + Math.cos(t * 0.18 + h.ph * 1.3) * 4 + dy - h.y) * Math.min(1, dt * 3);
-      h.flash = Math.max(0, h.flash - dt * 0.9);
-      if (h.state === "fading") { h.a -= dt * 0.5; if (h.a <= 0) { h.state = "gone"; relink(); } }
-      if (h.state === "kindling") h.a = Math.min(0.35, h.a + dt * 0.3);
+      if (h.state === "fading" && (h.a -= dt * 0.5) <= 0) { h.state = "gone"; gone = true; }
+      else if (h.state === "kindling") h.a = Math.min(0.35, h.a + dt * 0.3);
+      if (h.flash) h.flash = Math.max(0, h.flash - dt * 0.9);
     }
-    hosts = hosts.filter((h) => h.state !== "gone");
-    for (const p of pulses) p.k += dt / p.dur;
-    for (const p of pulses.filter((p) => p.k >= 1)) {
-      const h = p.to; if (h.state === "gone" || h.state === "fading" || h.ver >= p.ver) continue;
-      h.ver = p.ver; h.flash = 0.8;
-      if (h.state === "kindling") { h.state = "on"; h.a = 1; relink(); }
+    if (gone) { hosts = hosts.filter((h) => h.state !== "gone"); relink(); }
+    for (let i = pulses.length - 1; i >= 0; i--) {
+      const p = pulses[i]; if ((p.k += dt / p.dur) < 1) continue;
+      pulses[i] = pulses[pulses.length - 1]; pulses.pop();
+      const h = p.to; if ((h.state !== "on" && h.state !== "kindling") || h.ver >= p.ver) continue;
+      h.ver = p.ver; h.flash = 0.8; if (h.state === "kindling") { h.state = "on"; h.a = 1; }
       send(h, p.ver);
     }
-    pulses = pulses.filter((p) => p.k < 1);
     if ((nextWrite -= dt) <= 0) { write(); nextWrite = rand(3, 4.5); }
     if ((nextChange -= dt) <= 0) { change(); nextChange = rand(6, 10); }
   }
 
+  // ---- one frame ---------------------------------------------------------------------------------
   function draw() {
+    const Y = scrollY, top = Y + navH, bottom = Y + H;
     ctx.clearRect(0, 0, W, H);
-    ctx.globalAlpha = still ? 1 : Math.min(1, t / 2);
-    ctx.save(); ctx.beginPath(); ctx.rect(0, navH, W, H - navH); ctx.clip(); // never under the bar
+    ctx.save(); ctx.beginPath(); ctx.rect(0, navH, W, H - navH); ctx.clip();   // never under the bar
+    const fade = still ? 1 : Math.min(1, t / 2);
+    // move the hosts on screen (drift, and a nudge away from the pointer)
+    const i0 = firstAt(top - REACH);
+    for (let i = i0; i < hosts.length && hosts[i].hy < bottom + REACH; i++) {
+      const h = hosts[i]; let dx = 0, dy = 0;
+      if (pointer) { const px = pointer.x - h.hx, py = pointer.y + Y - h.hy, d = Math.hypot(px, py); if (d < 150) { const f = -(1 - d / 150) * 9 / (d || 1); dx = px * f; dy = py * f; } }
+      h.x = h.hx + (still ? 0 : Math.sin(t * 0.22 + h.ph) * 5) + dx;
+      h.y = h.hy + (still ? 0 : Math.cos(t * 0.18 + h.ph * 1.3) * 4) + dy;
+    }
     ctx.lineWidth = 1;
-    for (const h of hosts) {
-      if (!visible(h, 420)) continue;
-      for (const o of h.links) {
-        if (o.state === "gone" || (h.x > o.x && visible(o, 420))) continue;
-        let m = Math.min(h.a, o.a);
-        for (const f of [0.25, 0.5, 0.75]) m = Math.min(m, room(h.x + (o.x - h.x) * f, h.y + (o.y - h.y) * f));
-        if (m <= 0.01) continue;
-        ctx.strokeStyle = `rgba(${ink},${0.08 * m})`;
-        ctx.beginPath(); ctx.moveTo(h.x, h.y - Y); ctx.lineTo(o.x, o.y - Y); ctx.stroke();
-      }
+    for (const e of edges) {
+      if (e.bot < top || e.top > bottom) continue;
+      const m = e.m * Math.min(e.a.a, e.b.a) * fade; if (m < 0.02) continue;
+      ctx.strokeStyle = `rgba(${ink},${(0.08 * m).toFixed(3)})`;
+      ctx.beginPath(); ctx.moveTo(e.a.x, e.a.y - Y); ctx.lineTo(e.b.x, e.b.y - Y); ctx.stroke();
     }
     for (const p of pulses) {
-      const x = p.from.x + (p.to.x - p.from.x) * p.k, y = p.from.y + (p.to.y - p.from.y) * p.k;
-      if (y - Y < navH || y - Y > H) continue;
-      const m = room(x, y); if (m <= 0.01) continue;
-      ctx.fillStyle = `rgba(${ember},${0.8 * m})`; ctx.beginPath(); ctx.arc(x, y - Y, 1.6, 0, 6.29); ctx.fill();
+      const y = p.from.y + (p.to.y - p.from.y) * p.k; if (y < top || y > bottom) continue;
+      const x = p.from.x + (p.to.x - p.from.x) * p.k, m = Math.min(p.from.m, p.to.m) * fade; if (m < 0.02) continue;
+      ctx.globalAlpha = 0.8 * m; ctx.drawImage(glow, x - 4, y - Y - 4, 8, 8);
     }
-    for (const h of hosts) {
-      if (!visible(h, 30)) continue;
-      const m = room(h.x, h.y) * h.a; if (m <= 0.01) continue;
+    for (let i = firstAt(top - 30); i < hosts.length && hosts[i].hy < bottom + 30; i++) {
+      const h = hosts[i], m = h.m * h.a * fade; if (m < 0.02) continue;
       const near = pointer ? Math.max(0, 1 - Math.hypot(h.x - pointer.x, h.y - Y - pointer.y) / 170) : 0;
-      const fresh = h.ver === version ? 1 : 0.6, y = h.y - Y;
-      const glow = (0.16 + 0.3 * h.flash + 0.18 * near) * m * fresh, R = h.r * (5 + 4 * h.flash);
-      const g = ctx.createRadialGradient(h.x, y, 0, h.x, y, R);
-      g.addColorStop(0, `rgba(${ember},${glow})`); g.addColorStop(1, `rgba(${ember},0)`);
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(h.x, y, R, 0, 6.29); ctx.fill();
-      ctx.fillStyle = `rgba(${ember},${(0.6 + 0.35 * Math.max(h.flash, near)) * m * fresh})`;
-      ctx.beginPath(); ctx.arc(h.x, y, h.r, 0, 6.29); ctx.fill();
+      const R = h.r * (5 + 4 * h.flash);
+      ctx.globalAlpha = Math.min(1, (0.55 + 0.4 * Math.max(h.flash, near)) * m * (h.ver === version ? 1 : 0.6));
+      ctx.drawImage(glow, h.x - R, h.y - Y - R, R * 2, R * 2);
     }
-    ctx.restore();
+    ctx.restore(); ctx.globalAlpha = 1;
   }
 
-  function loop(now) {
+  // ---- when to draw ----------------------------------------------------------------------------
+  function frame(now) {
     if (!running) return;
+    requestAnimationFrame(frame);
     const dt = Math.min(0.05, (now - last) / 1000 || 0); last = now;
-    step(dt); draw(); requestAnimationFrame(loop);
+    step(dt);
+    const scrolled = scrollY !== lastY;                     // keep pace with the page while it moves
+    if (scrolled || now - drawn > 33) { draw(); drawn = now; lastY = scrollY; }
   }
   function play(go) {
     if (still) return;
-    if (go && !running) { running = true; last = performance.now(); requestAnimationFrame(loop); }
+    if (go && !running) { running = true; last = performance.now(); requestAnimationFrame(frame); }
     if (!go) running = false;
   }
+  function size() {
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    W = innerWidth; H = innerHeight; D = document.documentElement.scrollHeight;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    navH = document.querySelector(".nav")?.getBoundingClientRect().height || 0;
+    const cs = getComputedStyle(document.documentElement), hex = (v) => { const m = /#([0-9a-f]{6})/i.exec(v); if (!m) return null; const n = parseInt(m[1], 16); return `${n >> 16},${(n >> 8) & 255},${n & 255}`; };
+    ink = hex(cs.getPropertyValue("--p-ink")) || ink;
+    paintGlow(hex(cs.getPropertyValue("--p-accent")) || "232,89,12");
+  }
+  // layout changes: remeasure; a new width rebuilds the swarm, anything else only rechecks clearance
+  let width = 0, settle;
+  function relayout() {
+    size(); measure();
+    if (Math.abs(W - width) > 40 || !hosts.length) { width = W; build(); } else reclear();
+    draw();
+  }
   addEventListener("pointermove", (e) => { pointer = e.pointerType === "mouse" ? { x: e.clientX, y: e.clientY } : null; }, { passive: true });
-  document.addEventListener("pointerleave", () => { pointer = null; });
-  if (still) addEventListener("scroll", () => { Y = scrollY; draw(); }, { passive: true });
-  (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => setTimeout(() => { start(); play(!document.hidden); }, 400));
+  document.documentElement.addEventListener("pointerleave", () => { pointer = null; });
+  if (still) addEventListener("scroll", draw, { passive: true });
   document.addEventListener("visibilitychange", () => play(!document.hidden));
-  let rs; addEventListener("resize", () => { clearTimeout(rs); rs = setTimeout(() => { const w = W; size(); if (Math.abs(W - w) > 40) start(); else draw(); }, 200); });
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => setTimeout(() => {
+    relayout(); play(!document.hidden);
+    new ResizeObserver(() => { clearTimeout(settle); settle = setTimeout(relayout, 250); }).observe(document.body);
+    addEventListener("resize", () => { clearTimeout(settle); settle = setTimeout(relayout, 250); });
+  }, 400));
 })();
 </script>
 <script type="module" src="assets/system.js"></script>
