@@ -92,22 +92,15 @@
   @media (max-width: 639px) { #launch .panel { --p-h: 220px; } }
   /* phone: the sell command wraps onto a second row rather than lose its flags */
   @media (max-width: 639px) { #homelabs .ui-term__cmd { height: auto; flex-wrap: wrap; } #homelabs .ui-term__typed { white-space: normal; overflow: visible; flex: 1 1 0; } }
-  /* the swarm: every host an ember holding the whole app */
-  #swarm .section-head p { color: var(--p-inv-muted); }
-  .swarm { position: relative; margin-top: var(--s-6); border-radius: 4px; overflow: hidden; background: radial-gradient(120% 90% at 50% 110%, #3d2a1f 0%, #241d1a 55%, #1b1614 100%); }
-  .swarm canvas { display: block; width: 100%; height: clamp(380px, 56vw, 600px); cursor: crosshair; touch-action: manipulation; }
-  .swarm__hud { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; padding: 14px 20px; background: #171311; border-top: 1px solid rgba(255,255,255,.08); color: #f3ebe2; font: 400 0.9rem/1.4 var(--font-mono); }
-  .swarm__hud b { color: #ffb37a; font-weight: 500; }
-  .swarm__hud .is-down b { color: #a8a4a2; }
-  .swarm__spacer { flex: 1 1 auto; }
-  .swarm__btns { display: flex; gap: 8px; }
-  .swarm__btns button { font: 500 0.85rem/1 var(--font-text); color: #f3ebe2; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.22); border-radius: 3px; padding: 9px 12px; cursor: pointer; }
-  .swarm__btns button:hover { background: rgba(255,255,255,.16); }
-  .swarm__btns button:focus-visible { outline: 2px solid #ffb37a; outline-offset: 2px; }
-  .swarm__hint { position: absolute; top: 16px; left: 20px; color: #cfc6bd; font: 400 0.85rem/1.4 var(--font-text); pointer-events: none; transition: opacity .6s; }
-  .swarm-legend { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: var(--s-4); color: var(--p-inv-muted); font-size: 0.9rem; }
-  .swarm-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: -1px; }
-  @media (max-width: 639px) { .swarm__hud { font-size: 0.8rem; padding: 12px 14px; } .swarm__hint { left: 14px; right: 14px; } }
+  /* the swarm: the statement's lit frame, each host a point holding the whole app (canvas behind .frame__text) */
+  .swarm { margin-top: var(--s-6); }
+  #statement { --h: 2; --hm: 2; }
+  .swarm > canvas.frame__fx { width: 100%; height: 100%; cursor: pointer; touch-action: manipulation; }
+  .swarm > .frame__text { gap: var(--s-3); pointer-events: none; }
+  .swarm > .frame__text > * { pointer-events: auto; }
+  .swarm .frame__text p { margin: 0; }
+  .swarm__count { color: var(--muted); font-size: var(--t-small); font-variant-numeric: tabular-nums; }
+  .swarm__act { justify-self: start; }
   /* small links stay charcoal on hover: ember on white is under 4.5:1 for small text */
   .menu-col a:hover, .footer ul a:hover { color: var(--ink); }
 </style>
@@ -257,37 +250,19 @@
     </div>
   </section>
 
-  <section class="section ground-inverse" id="swarm" aria-labelledby="swarm-h">
-    <div class="wrap">
-      <div class="section-head">
-        <h2 id="swarm-h">No single fire to put out</h2>
-        <p>Every host you hire keeps a whole copy of your app. A new write spreads from host to host, and each visitor checks what they read against two of them. Put out any ember you like.</p>
-      </div>
-      <div class="swarm">
-        <canvas id="swarm-canvas" role="img" aria-label="A swarm of glowing hosts, each holding a copy of an app. Writes spread between them, visitors read from two at a time, and hosts can be put out while the rest keep serving."></canvas>
-        <p class="swarm__hint" id="swarm-hint">Tap an ember to put a host out. Tap empty space to hire one.</p>
-        <div class="swarm__hud">
-          <span id="swarm-hosts"><b>0</b> hosts serving</span>
-          <span id="swarm-app">app <b>online</b></span>
-          <span id="swarm-copy">latest write on <b>0 of 0</b></span>
-          <span class="swarm__spacer"></span>
-          <span class="swarm__btns"><button type="button" id="swarm-half">Put out half</button><button type="button" id="swarm-reset">Start over</button></span>
-        </div>
-        <p class="sr-only" id="swarm-status" aria-live="polite"></p>
-      </div>
-      <div class="swarm-legend" aria-hidden="true">
-        <span><i style="background:#ff8a3d"></i>A host serving your app</span>
-        <span><i style="background:#fff1d6"></i>A write spreading</span>
-        <span><i style="background:transparent;border:1.5px solid #f3ebe2;border-radius:2px"></i>A visitor checking two hosts</span>
-      </div>
-    </div>
-  </section>
-
   <section class="section statement" id="statement" aria-labelledby="statement-h">
     <div class="wrap">
       <div data-moment="liquid-type" class="section-head" style="max-width:none">
         <h2 id="statement-h" class="mo-lt__type">A host can go offline. Your page checks what it serves.</h2>
         <p>Your app's data lives with every host you hire, not one. Each visitor's browser checks what it reads, and every host enforces your rules.</p>
+      </div>
+      <div class="frame frame--lit swarm" id="swarm">
+        <canvas class="frame__fx" id="swarm-canvas" role="img" aria-label="Points of light, each a host holding a whole copy of an app. Writes pass from host to host, and visitors read from two hosts at a time."></canvas>
+        <div class="frame__text">
+          <p>Each light is a host with a whole copy of your app, and each square a visitor checking two of them. Tap a light to put it out.</p>
+          <p class="swarm__count" id="swarm-count" aria-live="polite"></p>
+          <button type="button" class="btn btn--secondary swarm__act" id="swarm-act">Put out half</button>
+        </div>
       </div>
       <div class="grid statement-facts">
         <div class="span-4 stack-2"><h3>Reads are checked</h3><p>Every value is checked against your app's chain. Read from two or more hosts and a value shows only when two agree; one host alone could still serve old data.</p></div>
@@ -410,188 +385,160 @@
 </footer>
 
 <script>
-/* The swarm: hosts as embers, each holding a whole copy of the app. Writes
-   spread host to host along nearest neighbours; visitors read from the two
-   nearest hosts. Put a host out and the rest keep serving; the market hires a
-   replacement, which copies the app from a neighbour. */
+/* The swarm, in the statement's lit frame: each host a point of the page's
+   accent holding the whole app. A write passes host to host along nearest
+   neighbours; a visitor reads from its two nearest hosts. Put a host out and
+   the rest keep serving; the market hires a replacement, which copies the app
+   from a neighbour. Colours come from the lit ground's tokens. */
 (function () {
   const canvas = document.getElementById("swarm-canvas");
   if (!canvas || !canvas.getContext) return;
+  const frame = canvas.parentElement, text = frame.querySelector(".frame__text");
   const ctx = canvas.getContext("2d");
   const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const $ = (id) => document.getElementById(id);
-  const hud = { hosts: $("swarm-hosts"), app: $("swarm-app"), copy: $("swarm-copy"), status: $("swarm-status"), hint: $("swarm-hint") };
-  let W = 0, H = 0, dpr = 1, hosts = [], packets = [], beams = [], smoke = [], visitors = [];
-  let N = 0, shown = "", version = 0, nextWrite = 1.2, nextRead = 0.8, nextHire = 6, t = 0, running = false, last = 0, touched = false;
+  const countEl = document.getElementById("swarm-count"), act = document.getElementById("swarm-act");
+  let W = 0, H = 0, N = 0, clear = null, col = {};
+  let hosts = [], packets = [], beams = [], visitors = [], version = 0;
+  let nextWrite = 1.5, nextRead = 1, nextHire = 7, t = 0, running = false, last = 0, shown = "";
   const rand = (a, b) => a + Math.random() * (b - a);
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   const live = () => hosts.filter((h) => h.alive);
+  const rgba = (hex, a) => { const n = parseInt(hex.replace("#", "").slice(0, 6), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
 
+  function colours() {
+    const cs = getComputedStyle(frame), v = (k, d) => (cs.getPropertyValue(k).trim() || d);
+    col = { ink: v("--ground-ink", "#262d24"), muted: v("--ground-muted", "#535b51"), glow: v("--p-accent", "#e8590c"), core: "#fff4e8" };
+  }
   function size() {
-    const r = canvas.getBoundingClientRect();
-    dpr = Math.min(2, window.devicePixelRatio || 1);
+    const r = canvas.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
     W = r.width; H = r.height;
     canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const tr = text.getBoundingClientRect(); // keep the words clear
+    clear = { x0: tr.left - r.left - 24, y0: tr.top - r.top - 24, x1: tr.right - r.left + 24, y1: tr.bottom - r.top + 24 };
   }
+  const blocked = (p) => p.x > clear.x0 && p.x < clear.x1 && p.y > clear.y0 && p.y < clear.y1;
   function spot() {
-    const top = 56, bottom = H - 86;
-    for (let i = 0; i < 60; i++) {
-      const p = { x: rand(28, W - 28), y: rand(top, bottom) };
-      if (hosts.every((h) => !h.alive || dist(h, p) > Math.max(46, Math.min(W, H) / 9))) return p;
+    const gap = Math.max(40, Math.min(W, H) / 8);
+    for (let i = 0; i < 80; i++) {
+      const p = { x: rand(24, W - 24), y: rand(24, H - 24) };
+      if (!blocked(p) && hosts.every((h) => !h.alive || dist(h, p) > gap)) return p;
     }
-    return { x: rand(28, W - 28), y: rand(top, bottom) };
+    return null;
   }
   function host(p, kindled) {
-    return { x: p.x, y: p.y, hx: p.x, hy: p.y, ph: rand(0, 6.28), r: rand(3.2, 5.2), alive: true, ver: kindled ? -1 : version, glow: kindled ? 0.35 : 1, links: [] };
+    return { x: p.x, y: p.y, hx: p.x, hy: p.y, ph: rand(0, 6.28), r: rand(2.6, 4), alive: true, ver: kindled ? -1 : version, glow: kindled ? 0.35 : 1, links: [] };
   }
   function relink() {
     const L = live();
     for (const h of L) h.links = L.filter((o) => o !== h).sort((a, b) => dist(h, a) - dist(h, b)).slice(0, 3);
   }
   function start() {
-    size();
-    shown = ""; hosts = []; packets = []; beams = []; smoke = []; version = 0;
-    N = Math.max(16, Math.min(40, Math.round((W * H) / 11000)));
-    for (let i = 0; i < N; i++) hosts.push(host(spot(), false));
-    const vy = H - 34;
-    visitors = [0.18, 0.5, 0.82].map((f) => ({ x: W * f, y: vy, ok: 0 }));
+    colours(); size();
+    hosts = []; packets = []; beams = []; version = 0; shown = "";
+    N = Math.max(12, Math.min(30, Math.round((W * H) / 16000)));
+    for (let i = 0; i < N; i++) { const p = spot(); if (p) hosts.push(host(p, false)); }
+    // visitors: along the edge away from the words
+    const top = clear.y0 > H / 2, y = top ? 22 : H - 22, xs = [0.3, 0.55, 0.8];
+    visitors = xs.map((f) => ({ x: W * f, y, ok: 0 })).filter((v) => !blocked(v));
     relink(); report(); draw();
   }
   function send(from, ver) {
-    for (const to of from.links) if (to.alive && to.ver < ver) packets.push({ from, to, ver, k: 0, dur: still ? 0 : Math.max(0.25, dist(from, to) / 260) });
+    for (const to of from.links) if (to.alive && to.ver < ver) packets.push({ from, to, ver, k: 0, dur: still ? 0 : Math.max(0.35, dist(from, to) / 180) });
   }
-  function arrive(p) {
-    if (!p.to.alive || p.to.ver >= p.ver) return;
-    p.to.ver = p.ver; p.to.glow = 1; send(p.to, p.ver);
-  }
+  function arrive(p) { if (p.to.alive && p.to.ver < p.ver) { p.to.ver = p.ver; p.to.glow = 1.4; send(p.to, p.ver); } }
   function write() {
     const L = live(); if (!L.length) return;
     const h = L[(Math.random() * L.length) | 0];
     version++; h.ver = version; h.glow = 1.6; send(h, version);
   }
   function read() {
-    const L = live(); if (L.length < 1) return;
+    const L = live(); if (!L.length || !visitors.length) return;
     const v = visitors[(Math.random() * visitors.length) | 0];
     const two = L.slice().sort((a, b) => dist(v, a) - dist(v, b)).slice(0, 2);
-    const agree = two.length === 2 && two[0].ver === two[1].ver;
     for (const h of two) beams.push({ v, h, life: 1 });
-    v.ok = agree ? 1 : -1;
+    v.ok = two.length === 2 && two[0].ver === two[1].ver ? 1 : 0;
   }
-  function out(h) {
-    h.alive = false;
-    for (let i = 0; i < 7; i++) smoke.push({ x: h.x + rand(-3, 3), y: h.y, vy: rand(-26, -14), vx: rand(-6, 6), life: 1 });
-    relink();
-  }
+  function out(h) { h.alive = false; h.fade = 1; relink(); }
   function hire(p) {
     const L = live();
-    if (!L.length) return false; // nothing left to copy the app from
-    if (L.length >= N * 2) return false;
-    hosts = hosts.filter((o) => o.alive);
+    if (!L.length || !p || blocked(p) || L.length >= N * 2) return false;
+    hosts = hosts.filter((o) => o.alive || o.fade > 0);
     const h = host(p, true); hosts.push(h); relink();
-    const src = L.sort((a, b) => dist(h, a) - dist(h, b))[0];
-    packets.push({ from: src, to: h, ver: version, k: 0, dur: still ? 0 : 0.9 });
+    const src = L.slice().sort((a, b) => dist(h, a) - dist(h, b))[0];
+    packets.push({ from: src, to: h, ver: version, k: 0, dur: still ? 0 : 1 });
     return true;
   }
   function report() {
-    const L = live(), on = L.length > 0, have = L.filter((h) => h.ver === version).length;
-    const key = `${L.length}/${have}/${version > 0}`; if (key === shown) return; shown = key;
-    hud.hosts.innerHTML = `<b>${L.length}</b> host${L.length === 1 ? "" : "s"} serving`;
-    hud.app.className = on ? "" : "is-down";
-    hud.app.innerHTML = on ? "app <b>online</b>" : "app <b>offline</b>: no copy left";
-    hud.copy.innerHTML = on ? `latest write on <b>${have} of ${L.length}</b>` : "";
+    const L = live(), have = L.filter((h) => h.ver === version).length;
+    const key = `${L.length}/${have}`; if (key === shown) return; shown = key;
+    countEl.textContent = !L.length ? "No host is serving, so the app is offline. Nothing is left to copy it from."
+      : `${L.length} host${L.length === 1 ? "" : "s"} serving. ${have === L.length ? "All have" : `${have} have`} the latest write.`;
+    act.textContent = L.length < N * 0.75 ? "Start over" : "Put out half";
   }
-  function say(text) { hud.status.textContent = text; }
-  function firstTouch() { if (!touched) { touched = true; hud.hint.style.opacity = "0"; } }
 
   canvas.addEventListener("click", (e) => {
     const r = canvas.getBoundingClientRect(), p = { x: e.clientX - r.left, y: e.clientY - r.top };
-    firstTouch();
     const near = live().sort((a, b) => dist(p, a) - dist(p, b))[0];
-    if (near && dist(near, p) < 30) { out(near); say(`A host went out. ${live().length} still serving.`); }
-    else if (hire(p)) say(`Hired a host. It copies the app from its nearest neighbour.`);
-    else say("No host is left with a copy to learn from.");
+    if (near && dist(near, p) < 28) out(near); else hire(p);
     report(); if (still) draw();
   });
-  $("swarm-half").addEventListener("click", () => {
-    firstTouch();
+  act.addEventListener("click", () => {
+    if (act.textContent === "Start over") { start(); return; }
     const L = live().sort(() => Math.random() - 0.5);
     L.slice(0, Math.ceil(L.length / 2)).forEach(out);
-    say(`Half the hosts went out. ${live().length} still serving, each with the whole app.`);
     report(); if (still) draw();
   });
-  $("swarm-reset").addEventListener("click", () => { start(); say("Started over."); });
 
   function step(dt) {
     t += dt;
     for (const h of hosts) {
-      if (!h.alive) continue;
-      h.x = h.hx + Math.sin(t * 0.6 + h.ph) * 5; h.y = h.hy + Math.cos(t * 0.45 + h.ph * 1.3) * 4;
-      h.glow = Math.min(1.6, h.glow + dt * 1.2); if (h.glow > 1) h.glow = Math.max(1, h.glow - dt * 1.5);
+      if (!h.alive) { h.fade = Math.max(0, h.fade - dt * 0.8); continue; }
+      h.x = h.hx + Math.sin(t * 0.35 + h.ph) * 4; h.y = h.hy + Math.cos(t * 0.28 + h.ph * 1.3) * 3;
+      if (h.glow < 1) h.glow = Math.min(1, h.glow + dt); else h.glow = Math.max(1, h.glow - dt * 0.8);
     }
     for (const p of packets) p.k += dt / (p.dur || 1e-3);
     packets.filter((p) => p.k >= 1).forEach(arrive);
     packets = packets.filter((p) => p.k < 1);
-    for (const b of beams) b.life -= dt * 0.9;
+    for (const b of beams) b.life -= dt * 0.7;
     beams = beams.filter((b) => b.life > 0);
-    for (const v of visitors) v.ok *= Math.pow(0.4, dt);
-    for (const s of smoke) { s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt * 0.5; }
-    smoke = smoke.filter((s) => s.life > 0);
-    if ((nextWrite -= dt) <= 0) { write(); nextWrite = rand(1.8, 3.2); }
-    if ((nextRead -= dt) <= 0) { read(); nextRead = rand(1.1, 1.9); }
-    if ((nextHire -= dt) <= 0) { if (live().length < N * 0.55 && live().length) hire(spot()); nextHire = rand(5, 8); }
+    for (const v of visitors) v.ok *= Math.pow(0.5, dt);
+    if ((nextWrite -= dt) <= 0) { write(); nextWrite = rand(3, 4.5); }
+    if ((nextRead -= dt) <= 0) { read(); nextRead = rand(1.8, 2.8); }
+    if ((nextHire -= dt) <= 0) { if (live().length && live().length < N * 0.6) hire(spot()); nextHire = rand(5, 8); }
     report();
   }
 
   function draw() {
     ctx.clearRect(0, 0, W, H);
     const L = live();
-    // links: who copies from whom
     ctx.lineWidth = 1;
-    for (const h of L) for (const o of h.links) {
-      ctx.strokeStyle = "rgba(255,170,110,0.10)";
-      ctx.beginPath(); ctx.moveTo(h.x, h.y); ctx.lineTo(o.x, o.y); ctx.stroke();
-    }
-    // reads: a visitor checks two hosts
-    for (const b of beams) {
-      ctx.strokeStyle = `rgba(243,235,226,${0.55 * b.life})`; ctx.setLineDash([3, 4]);
-      ctx.beginPath(); ctx.moveTo(b.v.x, b.v.y); ctx.lineTo(b.h.x, b.h.y); ctx.stroke(); ctx.setLineDash([]);
-    }
-    // writes in flight
+    ctx.strokeStyle = rgba(col.ink, 0.09);
+    ctx.beginPath();
+    for (const h of L) for (const o of h.links) { ctx.moveTo(h.x, h.y); ctx.lineTo(o.x, o.y); }
+    ctx.stroke();
+    ctx.setLineDash([2, 4]);
+    for (const b of beams) { ctx.strokeStyle = rgba(col.ink, 0.35 * b.life); ctx.beginPath(); ctx.moveTo(b.v.x, b.v.y); ctx.lineTo(b.h.x, b.h.y); ctx.stroke(); }
+    ctx.setLineDash([]);
     for (const p of packets) {
       const x = p.from.x + (p.to.x - p.from.x) * p.k, y = p.from.y + (p.to.y - p.from.y) * p.k;
-      const g = ctx.createRadialGradient(x, y, 0, x, y, 7);
-      g.addColorStop(0, "rgba(255,241,214,1)"); g.addColorStop(1, "rgba(255,241,214,0)");
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 7, 0, 6.29); ctx.fill();
+      ctx.fillStyle = rgba(col.glow, 0.9); ctx.beginPath(); ctx.arc(x, y, 2, 0, 6.29); ctx.fill();
     }
-    // hosts out: cold coals
-    for (const h of hosts) if (!h.alive) { ctx.fillStyle = "rgba(168,164,162,0.35)"; ctx.beginPath(); ctx.arc(h.x, h.y, 2.4, 0, 6.29); ctx.fill(); }
-    // hosts serving: embers, dimmer while behind the latest write
+    for (const h of hosts) if (!h.alive && h.fade > 0) {
+      ctx.strokeStyle = rgba(col.muted, 0.5 * h.fade + 0.15); ctx.beginPath(); ctx.arc(h.x, h.y, h.r, 0, 6.29); ctx.stroke();
+    } else if (!h.alive) { ctx.strokeStyle = rgba(col.muted, 0.15); ctx.beginPath(); ctx.arc(h.x, h.y, h.r, 0, 6.29); ctx.stroke(); }
     for (const h of L) {
-      const fresh = h.ver === version ? 1 : 0.55;
-      const fl = still ? 1 : 0.85 + 0.15 * Math.sin(t * 7 + h.ph * 3) * Math.sin(t * 3.1 + h.ph);
-      const R = h.r * 5.5 * Math.min(1, h.glow) * fl;
+      const fresh = h.ver === version ? 1 : 0.5, fl = still ? 1 : 0.9 + 0.1 * Math.sin(t * 2.2 + h.ph * 3);
+      const R = h.r * 4.2 * h.glow * fl;
       const g = ctx.createRadialGradient(h.x, h.y, 0, h.x, h.y, R);
-      g.addColorStop(0, `rgba(255,214,160,${0.95 * fresh})`);
-      g.addColorStop(0.25, `rgba(255,138,61,${0.75 * fresh})`);
-      g.addColorStop(1, "rgba(232,89,12,0)");
+      g.addColorStop(0, rgba(col.glow, 0.55 * fresh)); g.addColorStop(1, rgba(col.glow, 0));
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(h.x, h.y, R, 0, 6.29); ctx.fill();
-      ctx.fillStyle = `rgba(255,236,210,${fresh})`; ctx.beginPath(); ctx.arc(h.x, h.y, h.r * 0.55 * Math.min(1, h.glow), 0, 6.29); ctx.fill();
+      ctx.fillStyle = rgba(col.glow, fresh); ctx.beginPath(); ctx.arc(h.x, h.y, h.r * Math.min(1, h.glow), 0, 6.29); ctx.fill();
     }
-    // smoke from hosts put out
-    for (const s of smoke) { ctx.fillStyle = `rgba(200,192,184,${0.25 * s.life})`; ctx.beginPath(); ctx.arc(s.x, s.y, 3 + (1 - s.life) * 7, 0, 6.29); ctx.fill(); }
-    // visitors: browsers at the edge of the swarm
-    ctx.font = "500 11px " + getComputedStyle(document.body).fontFamily;
-    ctx.textAlign = "center";
     for (const v of visitors) {
-      ctx.strokeStyle = "rgba(243,235,226,0.85)"; ctx.lineWidth = 1.5;
-      ctx.strokeRect(v.x - 9, v.y - 7, 18, 14);
-      ctx.beginPath(); ctx.moveTo(v.x - 9, v.y - 3); ctx.lineTo(v.x + 9, v.y - 3); ctx.stroke();
-      ctx.fillStyle = "rgba(207,198,189,0.9)"; ctx.fillText("visitor", v.x, v.y + 22);
-      if (Math.abs(v.ok) > 0.05) {
-        ctx.fillStyle = v.ok > 0 ? `rgba(255,214,160,${v.ok})` : `rgba(207,198,189,${-v.ok})`;
-        ctx.fillText(v.ok > 0 ? "two agree" : "waits for two", v.x, v.y - 14);
-      }
+      ctx.strokeStyle = rgba(col.ink, 0.6); ctx.lineWidth = 1.25;
+      ctx.strokeRect(v.x - 7, v.y - 5, 14, 10);
+      if (v.ok > 0.05) { ctx.fillStyle = rgba(col.ink, 0.5 * v.ok); ctx.fillRect(v.x - 7, v.y - 5, 14, 10); }
     }
   }
 
@@ -605,10 +552,10 @@
     if (on && !running) { running = true; last = performance.now(); requestAnimationFrame(loop); }
     if (!on) running = false;
   }
-  start();
-  if (still) { write(); draw(); }
+  const boot = () => { start(); if (still) { write(); draw(); } };
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(boot);
   new IntersectionObserver((es) => play(es[0].isIntersecting && !document.hidden)).observe(canvas);
-  document.addEventListener("visibilitychange", () => play(!document.hidden && canvas.getBoundingClientRect().top < innerHeight));
+  document.addEventListener("visibilitychange", () => { const r = canvas.getBoundingClientRect(); play(!document.hidden && r.top < innerHeight && r.bottom > 0); });
   let rs; addEventListener("resize", () => { clearTimeout(rs); rs = setTimeout(() => { const w = W; size(); if (Math.abs(W - w) > 40) start(); else draw(); }, 200); });
 })();
 </script>
