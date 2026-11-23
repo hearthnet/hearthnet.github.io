@@ -101,15 +101,17 @@
   .page-swarm { opacity: 0; transition: opacity 2s ease; }
   .page-swarm.is-on { opacity: 1; }
   .page-swarm > svg { position: absolute; top: 0; left: 0; overflow: visible; }
-  .page-swarm line { stroke: var(--p-ink); stroke-width: 1; transition: opacity 2s ease; }
-  .page-swarm circle { transition: opacity 2s ease; }
-  .page-swarm circle.is-new { opacity: .3 !important; }
-  /* a write in flight and its arrival: compositor-only (transform, opacity) */
-  .swarm-write, .swarm-flash { position: absolute; top: 0; left: 0; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; pointer-events: none;
+  .page-swarm line { stroke: var(--p-ink); stroke-width: 1; transition: opacity 4s ease; }
+  /* a host breathes on its own slow clock; a new one waits dim; one going fades out (opacity: compositor-only) */
+  .swarm-host { position: absolute; top: 0; left: 0; border-radius: 50%; pointer-events: none; will-change: opacity;
+    background: radial-gradient(var(--p-accent) 0 16%, color-mix(in srgb, var(--p-accent) 30%, transparent) 20%, transparent 70%);
+    opacity: var(--o); animation: swarm-breathe var(--d) ease-in-out var(--delay) infinite alternate; }
+  .swarm-host.is-going { animation: swarm-out 4s ease forwards; }
+  @keyframes swarm-breathe { from { opacity: calc(var(--o) * .45); } to { opacity: var(--o); } }
+  @keyframes swarm-out { to { opacity: 0; } }
+  /* a write in flight: a faint dot the compositor moves */
+  .swarm-write { position: absolute; top: 0; left: 0; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; pointer-events: none; opacity: .5;
     background: radial-gradient(var(--p-accent) 30%, transparent 70%); will-change: transform; }
-  .swarm-flash { width: 24px; height: 24px; margin: -12px 0 0 -12px; background: radial-gradient(color-mix(in srgb, var(--p-accent) 35%, transparent), transparent 70%); animation: swarm-flash 1.2s ease-out forwards; }
-  @keyframes swarm-flash { from { opacity: 1; scale: .4; } to { opacity: 0; scale: 1.4; } }
-  main > .ground-surface { background: color-mix(in srgb, var(--bg) 85%, transparent); }
   @media print { .page-swarm { display: none; } }
   /* small links stay charcoal on hover: ember on white is under 4.5:1 for small text */
   .menu-col a:hover, .footer ul a:hover { color: var(--ink); }
@@ -395,8 +397,10 @@
    Nothing is drawn per frame. The hosts and links are one SVG as tall as the
    page, built once (the browser rasterizes it once and scrolls it with the
    content); a write is a dot gliding along a link on a CSS transform (the
-   compositor moves it); a host going dark or lighting up is a CSS fade. Script
-   only wakes every few seconds, to start a write or swap a host. Where a point
+   compositor moves it); each host breathes on its own slow clock and fades in or
+   out, all CSS opacity the compositor runs. Everything is slow and faint: motion
+   is always there, nothing jumps. Script only wakes every few seconds, to start
+   a write or swap a host. Where a point
    may sit (clear of the page's words and panels) is answered once, when it is
    placed, against blocks indexed by row; remeasured only when the layout changes. */
 (function () {
@@ -405,13 +409,13 @@
   const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const NS = "http://www.w3.org/2000/svg";
   const KEEP = "h1,h2,h3,p,li,pre,table,a.btn,button,.pill,.frame,.panel,.ui,.hero__window,.footer__col,.nav__logo,.footer__legal,.link,.step-num";
-  const PAD = 36, ROW = 160, REACH = 420, SPEED = 110;   // clearance, block-index row, link reach, px/s of a write
+  const PAD = 36, ROW = 160, REACH = 420, SPEED = 40;    // clearance, block-index row, link reach, px/s of a write
   const LIT = 0.6;                                       // a host's brightness where it is fully clear
   const rand = (a, b) => a + Math.random() * (b - a);
   const el = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
 
   let W = 0, H = 0, D = 0, navH = 0, rows = new Map(), ids = 0, version = 0;
-  let hosts = [], svg = null, gLinks = null, gHosts = null;
+  let hosts = [], svg = null, gLinks = null;
 
   // ---- the page's blocks, indexed by row --------------------------------------------------------
   function measure() {
@@ -449,11 +453,15 @@
     }
     return null;
   }
+  // a host: a small glow that breathes on its own slow clock (a CSS opacity animation: the compositor runs it)
+  const bright = (h) => h.dot.style.setProperty("--o", (LIT * h.m * (h.dot.classList.contains("is-new") ? 0.4 : 1)).toFixed(2));
   function addHost(p, lit) {
-    const r = rand(1.3, 2.3), h = { id: ids++, x: p.x, y: p.y, m: room(p.x, p.y), ver: lit ? version : -1, near: [], lines: [] };
-    h.dot = el("circle", { cx: p.x.toFixed(1), cy: p.y.toFixed(1), r: (r * 5).toFixed(1), fill: "url(#swarm-glow)", class: lit ? "" : "is-new" });
-    h.dot.style.opacity = lit ? (LIT * h.m).toFixed(2) : 0;
-    gHosts.appendChild(h.dot); hosts.push(h);
+    const h = { id: ids++, x: p.x, y: p.y, m: room(p.x, p.y), ver: lit ? version : -1, near: [], lines: [] };
+    h.dot = document.createElement("i");
+    h.dot.className = lit ? "swarm-host" : "swarm-host is-new";
+    const size = rand(13, 23);
+    h.dot.style.cssText = `width:${size.toFixed(0)}px;height:${size.toFixed(0)}px;transform:translate(${(p.x - size / 2).toFixed(1)}px,${(p.y - size / 2).toFixed(1)}px);--d:${rand(7, 12).toFixed(1)}s;--delay:-${rand(0, 12).toFixed(1)}s`;
+    bright(h); layer.appendChild(h.dot); hosts.push(h);
     return h;
   }
   // three nearest neighbours each; a link is drawn once, its strength its clearance
@@ -478,11 +486,9 @@
     }
   }
   function build() {
-    const accent = getComputedStyle(document.documentElement).getPropertyValue("--p-accent").trim() || "#e8590c";
     svg = el("svg", { width: W, height: D, viewBox: `0 0 ${W} ${D}` });
-    svg.innerHTML = `<defs><radialGradient id="swarm-glow"><stop offset="0" stop-color="${accent}"/><stop offset=".18" stop-color="${accent}" stop-opacity=".9"/><stop offset=".2" stop-color="${accent}" stop-opacity=".3"/><stop offset="1" stop-color="${accent}" stop-opacity="0"/></radialGradient></defs>`;
-    gLinks = el("g", { class: "swarm-links" }); gHosts = el("g", { class: "swarm-hosts" });
-    svg.append(gLinks, gHosts);
+    gLinks = el("g", { class: "swarm-links" });
+    svg.append(gLinks);
     layer.replaceChildren(svg);
     hosts = [];
     const n = Math.max(24, Math.min(160, Math.round((W * D) / 26000)));
@@ -490,10 +496,10 @@
     relink();
   }
 
-  // ---- what happens, every few seconds ------------------------------------------------------------
+  // ---- what happens, every few seconds, on screen; all of it slow and faint ------------------------
   const onScreen = () => hosts.filter((h) => h.dot.isConnected && !h.going && h.y > scrollY + navH && h.y < scrollY + H);
-  // a write: a dot glides from host to neighbour on a CSS transform; each arrival passes it on
-  function glide(from, to, ver) {
+  // a write: a faint dot drifts from host to neighbour on a CSS transform, and on for two hops
+  function glide(from, to, ver, hops) {
     const d = document.createElement("i");
     d.className = "swarm-write";
     d.style.transform = `translate(${from.x}px, ${from.y}px)`;
@@ -502,29 +508,27 @@
     d.getBoundingClientRect();                                   // start from here
     d.style.transition = `transform ${dur.toFixed(2)}s linear`;
     d.style.transform = `translate(${to.x}px, ${to.y}px)`;
-    setTimeout(() => { d.remove(); arrive(to, ver); }, dur * 1000);
+    setTimeout(() => { d.remove(); arrive(to, ver, hops); }, dur * 1000);
   }
-  function arrive(h, ver) {
+  function arrive(h, ver, hops) {
     if (h.going || h.ver >= ver || !h.dot.isConnected) return;
     h.ver = ver;
-    if (h.dot.classList.contains("is-new")) { h.dot.classList.remove("is-new"); h.dot.style.opacity = (LIT * h.m).toFixed(2); }
-    const f = document.createElement("i"); f.className = "swarm-flash"; f.style.transform = `translate(${h.x}px, ${h.y}px)`;
-    layer.appendChild(f); setTimeout(() => f.remove(), 1200);
-    for (const o of h.near) if (!o.going && o.ver < ver && !o.dot.classList.contains("is-new")) glide(h, o, ver);
+    if (h.dot.classList.contains("is-new")) { h.dot.classList.remove("is-new"); bright(h); }
+    if (hops > 0) for (const o of h.near) if (!o.going && o.ver < ver && !o.dot.classList.contains("is-new")) glide(h, o, ver, hops - 1);
   }
-  function write() { const L = onScreen(); if (!L.length) return; version++; arrive(L[(Math.random() * L.length) | 0], version); }
+  function write() { const L = onScreen(); if (!L.length) return; version++; arrive(L[(Math.random() * L.length) | 0], version, 2); }
   // a host goes dark; another lights nearby, dim until it has copied the app from a neighbour
   function change() {
     const L = onScreen();
     if (L.length > 3) {
       const h = L[(Math.random() * L.length) | 0]; h.going = true;
-      h.dot.style.opacity = 0; for (const l of h.lines) l.style.opacity = 0;
-      setTimeout(() => { h.dot.remove(); hosts = hosts.filter((o) => o !== h); relink(); }, 2200);
+      h.dot.classList.add("is-going"); for (const l of h.lines) l.style.opacity = 0;
+      setTimeout(() => { h.dot.remove(); hosts = hosts.filter((o) => o !== h); relink(); }, 4200);
     }
     const p = spot(scrollY + navH + 8, scrollY + H - 8); if (!p) return;
     const h = addHost(p, false); relink();
     const src = h.near.find((o) => !o.going && !o.dot.classList.contains("is-new"));
-    if (src) setTimeout(() => glide(src, h, version), 900);
+    if (src) setTimeout(() => glide(src, h, version, 0), 1500);
   }
   let timers = [];
   function schedule(fn, a, b) { const tick = () => { if (!document.hidden) fn(); timers.push(setTimeout(tick, rand(a, b) * 1000)); }; timers.push(setTimeout(tick, rand(a, b) * 1000)); }
@@ -538,13 +542,13 @@
     measure();
     if (Math.abs(W - width) > 40 || !svg) { width = W; build(); return; }
     svg.setAttribute("height", D); svg.setAttribute("viewBox", `0 0 ${W} ${D}`);
-    for (const h of hosts) { h.m = room(h.x, h.y); if (!h.going && !h.dot.classList.contains("is-new")) h.dot.style.opacity = (LIT * h.m).toFixed(2); }
+    for (const h of hosts) { h.m = room(h.x, h.y); bright(h); }
     relink();
   }
   (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => setTimeout(() => {
     relayout();
     layer.classList.add("is-on");
-    if (!still) { schedule(write, 3, 4.5); schedule(change, 6, 10); }
+    if (!still) { schedule(write, 6, 9); schedule(change, 15, 25); }
     new ResizeObserver(() => { clearTimeout(settle); settle = setTimeout(relayout, 250); }).observe(document.body);
     addEventListener("resize", () => { clearTimeout(settle); settle = setTimeout(relayout, 250); });
   }, 400));
