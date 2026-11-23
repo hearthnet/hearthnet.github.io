@@ -29,7 +29,7 @@ A host does three things for each chain it sells: it hosts the chain on its node
 
 ## Prerequisites
 
-- A running Lattice node, **4.0.1 or newer** (`lattice up`). See the [Lattice docs](https://lattice.build/docs/). The seller checks the node's features (its `GET /config` saying which layer lists each chain) and stops beside an older one with "Hearth needs Lattice 4.0.1 or newer (you have X: ...)".
+- A running Lattice node, **5.0.0 or newer** (`lattice up`). See the [Lattice docs](https://lattice.build/docs/). The seller checks the node's features (its `GET /config` saying which layer lists each chain) and stops beside an older one with "Hearth needs Lattice 5.0.0 or newer (you have X: ...)".
 - `lattice-sponsor` on your `PATH`, or `--sponsor-bin <path>`. See the [Lattice docs](https://lattice.build/docs/) for where to get it.
 - Node.js 22 or later.
 - Hearth itself, from source (it is not on npm yet; `npx @hearthnet/hearth` soon):
@@ -55,7 +55,7 @@ It checks every flag, and that a Lattice node lives at `--root`, before it write
 ## What it does
 
 1. **Finds the node.** It uses `--root`, else the current directory, else `~/.lattice` (where a bare `lattice-node` keeps its storage): the first that holds a running node's `chains/Nexus/.cookie`. With `--node` and `--token-file` it uses a node elsewhere instead.
-2. **Checks the node** is Lattice 4.0.1 or newer, by its features.
+2. **Checks the node** is Lattice 5.0.0 or newer, by its features.
 3. **Makes the seller's key** at `<root>/hearth/seller.json` unless there is one. The file is mode 0600. It prints the address, never the key, and says what you earn and what you can spend it on. It refuses a key file that others can read.
 4. **Writes the offer file** from the flags, once, at `<root>/hearth/<offer id>.json`. The offer id comes from the terms, so the same flags find the same file.
 5. **Runs the seller** (`host/sell-hosting.mjs`) in the foreground. Beside the node it starts lattice-sponsor (below). Every `--interval` seconds (default 30) it makes one pass:

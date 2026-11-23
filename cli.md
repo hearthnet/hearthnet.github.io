@@ -37,7 +37,7 @@ Every subcommand finds the node, the seller's key and the market with these flag
 
 ## hearth sell
 
-Sells hosting from a running Lattice node (4.0.1 or newer), in the foreground: hosts the chains it sells, makes their blocks and the market's, and runs lattice-sponsor beside the node. See [Sell hosting](sell.md).
+Sells hosting from a running Lattice node (5.0.0 or newer), in the foreground: hosts the chains it sells, makes their blocks and the market's, and runs lattice-sponsor beside the node. See [Sell hosting](sell.md).
 
 ```
 hearth sell [--price 10000/day] [--parent Nexus/testnet] [--chains 10]
