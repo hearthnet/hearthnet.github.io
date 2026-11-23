@@ -29,7 +29,7 @@ The page takes these settings in its URL:
 
 ## 1. Buy market coin
 
-Hosts are paid in the market chain's own coin. On **Buy coin**, the page lists coin that sellers have locked on the market chain, each lot for a price in the parent chain's coin (`Nexus/testnet` coin). The cheapest per coin comes first.
+Hosts are paid in the market chain's own coin, Hearth coin. Hosts earn it, and sell what they don't spend with `hearth sell-coin` (see [Sell your coin](sell.md#sell-your-coin-hearth-sell-coin)). On **Buy coin**, the page lists coin that sellers have locked on the market chain, each lot for a price in the parent chain's coin (`Nexus/testnet` coin). The cheapest per coin comes first.
 
 Press **Buy** on a lot. The page then:
 

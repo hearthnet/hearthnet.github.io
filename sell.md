@@ -10,7 +10,7 @@ This page shows how to sell hosting from your Lattice node with one command, kee
 
 ## Why host
 
-To earn Hearth coin, the market's coin, which you can spend on hosting or storage from any seller. You earn it two ways:
+To earn Hearth coin, the market's coin. Hosts earn it, then spend it on hosting or storage from any seller, or sell it on Lattice's exchange (see [Sell your coin](#sell-your-coin-hearth-sell-coin)), where buyers buy it on the app's **Buy coin** page. You earn it two ways:
 
 - **Orders.** Buyers pay your seller key for each chain you host, by the day.
 - **Block rewards.** The market pays 1,000 coin a block, about one block a minute. Your seller makes market blocks (see [Blocks](#blocks)), and each one it makes pays your sponsor's key. `hearth sweep` moves them to your seller key.
@@ -135,6 +135,30 @@ hearth earn [--until <coins>] [--workers 1] [--sponsor <url>]
 
 Buyers pay you in market coin, to the seller's address.
 
+## Sell your coin: hearth sell-coin
+
+The coin you earn is yours to spend on hosting or storage, or to sell. Buyers of hosting need market coin, and they buy it on the web app's **Buy coin** page from coin that hosts have put on sale. To put yours on sale:
+
+```
+hearth sell-coin 300000 --price 3000 [--float 100]
+```
+
+This locks 300,000 market coin from your seller key (a month of one chain at the default price) on Lattice's own exchange, for 3,000 `Nexus/testnet` coin for all of it. `--price` is what a buyer pays for the whole lot, in the coin of the market's parent chain. Before it signs, it checks the amounts and that your key keeps at least `--float` coin (default 100) for its fees. To sell block rewards, `hearth sweep` them to your seller key first.
+
+It prints the deposit and what a buyer pays:
+
+```
+locked 300000 market coin on Nexus/testnet/lodger-3129cc for sale at 3000 Nexus/testnet coin: deposit <address>/3000/<nonce>
+transaction <cid>
+A buyer pays 3000 Nexus/testnet coin (and that chain's fee) on Nexus/testnet; Lattice credits it straight to <address> there, with nothing to claim, and the buyer takes the coin. ...
+```
+
+**Getting paid.** When a buyer pays, Lattice moves the price from the buyer to your address on `Nexus/testnet` in the same transaction. You don't claim anything, and nothing needs to run. Your seller key's address is the same on every chain, so the key you sell with is the key that holds the payment.
+
+**No cancel.** Lattice has no cancel or refund for a deposit. The coin stays locked until someone buys it. The only way back is to buy it yourself like any buyer: pay its price to your own address on `Nexus/testnet` and take the coin, at a fee on each chain. Price it to sell.
+
+**Pricing.** `hearth status` shows the cheapest coin on sale on the market, in parent coin per market coin, and each of your deposits, with the buyer once one has paid for it.
+
 ## Status
 
 Each pass prints, and `hearth status` prints once:
@@ -145,6 +169,16 @@ market Nexus/testnet/lodger-3129cc at block 12561: the seller's key <address> ho
 owes hosting to Nexus/testnet/app1 (to market block 14001)
 storage pinned by the sponsor: 12.0 MiB of its 256.0 MiB budget, 1.0 MiB held for uploads being paid, 243.0 MiB left
 ```
+
+`hearth status` adds the exchange:
+
+```
+exchange: the cheapest market coin on sale is 300000 for 3000 Nexus/testnet coin (0.0100 each), of 4 open deposits
+on sale: 300000 for 3000 Nexus/testnet coin (0.0100 each), deposit <address>/3000/<nonce>
+the seller's key holds 3000 on Nexus/testnet, where buyers of its coin pay it
+```
+
+A deposit someone has paid for says `bought by <address>, who paid you on Nexus/testnet` until they take the coin.
 
 *Earned* is what other buyers paid your key for hosting you owe or owed: settled orders (16 market blocks) judged *owed*, and settled renewals of those chains that bought time (not ones after a close). Void, full and taken orders, and your own orders, count in neither. *Settling* is what buyers paid in orders and renewals that have not settled yet. `hearth status` never waits: if the market isn't synced it says `market not synced (height X of Y)`, and each read has a deadline. With `--node`, the storage line is skipped, since the sponsor runs beside the remote node. The storage line comes from the sponsor's `GET /terms`: what it has pinned, what it holds for uploads still being paid, and what is left of the budget.
 

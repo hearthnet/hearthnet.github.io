@@ -15,7 +15,7 @@ git clone https://github.com/hearthnet/hearth && npm i -g ./hearth
 ```
 
 ```
-hearth <sell | status | stop | unpin | sweep | earn | burn> [flags]
+hearth <sell | status | stop | unpin | sweep | earn | burn | sell-coin> [flags]
 ```
 
 `hearth`, `hearth help` and `hearth --help` print the usage and exit 0. `hearth <subcommand> --help` (or `-h`) prints that subcommand's usage and exits 0. Any other subcommand prints it and exits 2. An unknown flag is an error. A bad value prints `hearth: <reason>` and exits 2.
@@ -83,7 +83,7 @@ An offer sells for 30 days. Run `hearth sell` again to extend it: there is no au
 
 ## hearth status
 
-Prints once, without waiting (each read has a deadline; an unsynced market prints `market not synced (height X of Y)`), what the seller prints each pass: both keys' balances on the market, the seller's orders by verdict and its renewals, the coin they paid (settled, and still settling), the chains it owes hosting to and until which market block, the storage its sponsor has pinned against the budget, and whether a seller runs beside the node.
+Prints once, without waiting (each read has a deadline; an unsynced market prints `market not synced (height X of Y)`), what the seller prints each pass: both keys' balances on the market, the seller's orders by verdict and its renewals, the coin they paid (settled, and still settling), the chains it owes hosting to and until which market block, the storage its sponsor has pinned against the budget, the market's cheapest coin on sale (parent coin per market coin), each of the seller key's open deposits and who paid for it, the key's balance on the market's parent, and whether a seller runs beside the node.
 
 ```
 hearth status [--market Nexus/testnet/lodger-3129cc] [--root <node root> | --node <url> --token-file <file>] [--key <file>]
@@ -177,3 +177,21 @@ burned total on Nexus/testnet: 300 once it is in a block (was 0)
 ```
 
 Each run burns again. To burn only up to a total, use `hearth sell --burn`.
+
+## hearth sell-coin
+
+Puts the seller key's market coin on sale on Lattice's exchange: a deposit on the market that a buyer takes by paying `--price` on the market's parent chain. See [Sell your coin](sell.md#sell-your-coin-hearth-sell-coin).
+
+```
+hearth sell-coin <coin> --price <parent coin> [--float 100] [--market Nexus/testnet/lodger-3129cc]
+                 [--root <node root> | --node <url> --token-file <file>] [--key <file>] [--lattice lattice] [--fee <n>]
+```
+
+| Argument or flag | Default | Description |
+|---|---|---|
+| `<coin>` | required | Whole market coin to lock, 1 to 9007199254740991. |
+| `--price <parent coin>` | required | Whole parent-chain coin a buyer pays for all of it. |
+| `--float <coin>` | `100` | What the key keeps for fees: it refuses to lock more than its balance less the float and the fee. |
+| `--fee <n>` | the market's `minRelayFee`, else 1 | The transaction's fee. |
+
+The key must exist. Every amount is checked before the node is asked anything. The deposit's nonce is the key's account nonce. It prints the deposit, the transaction, and what a buyer pays. The buyer's payment lands in the key's address on the parent: there is nothing to claim. A deposit can't be cancelled: Lattice has no cancel or refund, so it stays locked until someone buys it (the seller included, paying its price to itself).
