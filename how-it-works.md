@@ -10,7 +10,7 @@ This page describes the market chain, its records, how orders are judged, how co
 
 ## The market chain
 
-The market is a Lattice chain, `Nexus/testnet/lodger-3129cc`. Its path keeps an older name because a chain's path is fixed on chain.
+The market is a Lattice chain, `Nexus/hearth`.
 
 There is no server. Hosts write offers to the market chain, and buyers write orders that pay hosts. The web app and the seller read the same records and judge them with the same code (`client/verdict.mjs`), so they reach the same verdicts.
 
@@ -152,7 +152,7 @@ Hosts are paid in the market chain's own coin. It is bought with the parent chai
 2. **Receipt.** A buyer pays that price to the seller on the parent chain, naming the deposit.
 3. **Withdrawal.** The buyer takes the locked coin on the market chain.
 
-Lattice checks both sides, so nobody holds the payment in between, and there is no exchange to trust. On testnet, the parent's coin can also be earned through the fee sponsor's payouts.
+Lattice checks both sides, so nobody holds the payment in between, and there is no exchange to trust. Where a fee sponsor pays out parent coin, it can also be earned through the sponsor's payouts.
 
 ## The trust model
 

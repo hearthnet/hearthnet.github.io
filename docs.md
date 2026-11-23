@@ -10,11 +10,11 @@ This site explains how to use Hearth, as a buyer or as a host.
 
 Hearth is a hosting market for app chains. You hire anyone to host your app's chain and pay them by the day, or by whatever period their offer names. Every read is checked in your browser, or on your own node.
 
-There is no Hearth server. The market is itself a chain, `Nexus/testnet/lodger-3129cc`, on [Lattice](https://lattice.build/docs/), the chain Hearth runs on. The web app reads the market from any node that hosts it and checks every record against its CID.
+There is no Hearth server. The market is itself a chain, `Nexus/hearth`, on [Lattice](https://lattice.build/docs/), the chain Hearth runs on. The web app reads the market from any node that hosts it and checks every record against its CID.
 
 Hosts also make their chains' blocks. Every host makes zero-work blocks (about one hash each) on the market and on every chain it hosts, one per target block time, so a chain lives without miners. Each host also runs a sponsor, so your visitors can write and store with a few seconds of proof-of-work instead of coin. Anyone else may mine a chain too, for its block reward. See [Blocks and mining](mining.md).
 
-Hearth runs on testnet only.
+Hearth runs on Lattice mainnet.
 
 ## Who it's for
 

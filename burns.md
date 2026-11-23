@@ -33,8 +33,7 @@ Burns count on each chain from Nexus down to the market:
 | Chain | Coin |
 |---|---|
 | `Nexus` | Nexus coin |
-| `Nexus/testnet` | testnet coin |
-| `Nexus/testnet/lodger-3129cc` | market coin |
+| `Nexus/hearth` | market coin |
 
 Each chain's coin is its own. The web app shows burns per chain and never adds them together.
 
@@ -43,7 +42,7 @@ Each chain's coin is its own. The web app shows burns per chain and never adds t
 From the seller's key, burn now with `hearth burn`:
 
 ```
-hearth burn 300 --chain Nexus/testnet
+hearth burn 300 --chain Nexus
 ```
 
 It sends a transfer of 300 from the seller's key to its burn address on that chain. It prints the transaction and the burned total. It refuses a chain off the path from Nexus to the market. It reads the key from `<root>/hearth/seller.json`, or `--key`, and does not make one.
