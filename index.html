@@ -1,11 +1,11 @@
-<title>Hearth: a backend for web apps that anyone can host</title>
+<title>Hearth: app data served by hosts you pay</title>
 <script>(function(h){h.lang="en";h.dataset.type="software";h.dataset.radius="sharp";h.dataset.ground="sage";h.dataset.buttons="solid";h.setAttribute("data-motion","");})(document.documentElement)</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Give your web app a database, rules and file storage, run by hosts you hire by the day. Every read is checked in the browser.">
+<meta name="description" content="Keys, values and files for a static web page, served by hosts you pay by the day. Browsers check every read.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Hearth: a backend for web apps that anyone can host">
-<meta property="og:description" content="Hire anyone to host your app's data, rules and files. Run a homelab or a server? Sell hosting with one command and get paid up front.">
+<meta property="og:title" content="Hearth: app data served by hosts you pay">
+<meta property="og:description" content="Pay hosts by the day to serve your app's data and files, or sell hosting with hearth sell.">
 <meta property="og:image" content="share.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -146,9 +146,9 @@
   <section class="hero hero--centred" data-enter aria-labelledby="hero-h">
     <div class="wrap"><div class="hero-text">
       <div class="hero__c">
-        <a class="pill" href="https://hearthnet.github.io/launch.html"><span>On mainnet</span><span class="muted">Apps go live in under an hour</span></a>
-        <h1 id="hero-h">A backend for your web app, kept online by hosts you hire</h1>
-        <p class="hero__lead">Store your app's data and files without running a server. Pay independent hosts by the day. Visitors write without an account or coin, and their browsers check what the hosts send back.</p>
+        <a class="pill" href="https://hearthnet.github.io/launch.html"><span>On Lattice mainnet</span></a>
+        <h1 id="hero-h">App data served by hosts you pay</h1>
+        <p class="hero__lead">Keys, values and files for a static web page. You pay hosts by the day; visitors write without an account or coin, and their browsers check every read.</p>
         <div class="btn-row"><a class="btn btn--primary" href="https://hearthnet.github.io/launch.html">Launch an app</a><a class="btn btn--secondary" href="#homelabs">Sell hosting</a></div>
       </div>
       <div class="hero__window" role="img" aria-label="Hearth showing the hosts serving an app, with each host's price, domain or stake, and the steps of hiring one more">
@@ -205,8 +205,8 @@
   <section class="section" id="launch" aria-labelledby="launch-h">
     <div class="wrap">
       <div class="section-head">
-        <h2 id="launch-h">Launch an app in 3 steps</h2>
-        <p>Your page stays static. Hearth gives it a backend, and the hosts you hire keep it online.</p>
+        <h2 id="launch-h">Launch an app</h2>
+        <p>Your page stays static. The hosts you pay serve its data.</p>
       </div>
       <div class="grid">
         <article class="card card--row card--open span-4">
@@ -228,7 +228,7 @@
         <article class="card card--row card--open span-4">
           <span class="step-num">2</span>
           <h3>Hire hosts</h3>
-          <p>Pay one or more hosts up front for the days you want. If one stops, the others keep serving, and you renew only the hosts that stayed up.</p>
+          <p>Pay one or more hosts up front for the days you want. If one stops, the others keep serving; renew only the ones that stayed up.</p>
           <div class="panel">
             <div class="stage stage--fade-b"><div class="at-rise fit" style="--fit-max: 340px; --ax: max(24px, 50% - 170px); --ay: 40px">
               <div class="ui ui-notify" data-ui="notify">
@@ -266,13 +266,13 @@
   <section class="section statement" id="statement" aria-labelledby="statement-h">
     <div class="wrap">
       <div data-moment="liquid-type" class="section-head" style="max-width:none">
-        <h2 id="statement-h" class="mo-lt__type">A host can go offline. Your page checks what it serves.</h2>
-        <p>Your app's data lives with every host you hire, not one. Each visitor's browser checks what it reads, and every host enforces your rules.</p>
+        <h2 id="statement-h" class="mo-lt__type">What hosts can and can't do</h2>
+        <p>Every host you pay keeps a copy. Browsers check what they read, and every host enforces your rules.</p>
       </div>
       <div class="grid statement-facts">
         <div class="span-4 stack-2"><h3>Reads are checked</h3><p>Every value is checked against your app's chain. Read from two or more hosts and a value shows only when two agree; one host alone could still serve old data.</p></div>
         <div class="span-4 stack-2"><h3>Rules hold everywhere</h3><p>A write your rules refuse is refused by every host, so no single host can let it through.</p></div>
-        <div class="span-4 stack-2"><h3>Hosts are judged on the record</h3><p>See each host's serving record, stake and domain before you pay, read from the chain rather than from the host.</p></div>
+        <div class="span-4 stack-2"><h3>Host records are on the chain</h3><p>Each host's serving record, stake and domain, read from the chain before you pay.</p></div>
       </div>
     </div>
   </section>
@@ -281,14 +281,14 @@
     <div class="wrap">
       <div class="grid grid--top fill">
         <div class="span-5 stack-5">
-          <h2 id="homelabs-h">Earn by hosting apps</h2>
-          <p class="t-lead">Run <code>hearth sell</code> next to your Lattice node (5.0.0 or newer). Set your own daily price, and it serves each app that pays for it.</p>
+          <h2 id="homelabs-h">Sell hosting</h2>
+          <p class="t-lead">Run <code>hearth sell</code> next to your Lattice node (5.0.0 or newer). You set a daily price; it serves each app that pays.</p>
           <ul class="facts-list stack-3">
             <li>Apps pay up front, before you serve anything</li>
             <li>Spend what you earn on hosting and storage, or sell it with <code>hearth sell-coin</code></li>
             <li>Your machine makes each app's blocks, so no miners are needed</li>
-            <li>No domain? You're listed under your key</li>
-            <li>New? Put coin at stake with <code>hearth burn</code> so buyers can see you're serious</li>
+            <li>Without a domain, you're listed under your key</li>
+            <li>Optionally burn coin with <code>hearth burn</code>; buyers see how much</li>
           </ul>
           <a class="link" href="https://hearthnet.github.io/sell.html">Read the seller guide</a>
         </div>
@@ -328,7 +328,6 @@
       <div class="grid grid--top">
         <div class="span-5 stack-4">
           <h2 id="questions-h">Questions</h2>
-          <p class="muted">What Hearth does today, and what it doesn't do yet.</p>
           <div class="frame frame--lit q-frame">
             <div class="stage stage--fade-b"><div class="at-rise to-edge" style="--w: 440px; --ax: max(24px, 50% - 220px); --ay: 40px">
               <div class="ui ui-panel ui-code" data-ui="code">
@@ -352,8 +351,8 @@
           <div class="faq__item"><h3>What happens if a host stops?</h3><p>The other hosts you hired keep serving. You stop paying that host when its days run out.</p></div>
           <div class="faq__item"><h3>Can my app run SQL or server code?</h3><p>No. Data is keys and values, read by key or prefix. There are no server functions.</p></div>
           <div class="faq__item"><h3>Is my app's data private?</h3><p>No. Anyone can read an app's data. Encrypt what should stay private before you write it.</p></div>
-          <div class="faq__item"><h3>Can I change my app's rules later?</h3><p>No. They are fixed at launch, so test them on testnet first.</p></div>
-          <div class="faq__item"><h3>Why do hosts put coin at stake?</h3><p>To show they're serious. A host burns coin it can never get back, and you see how much before you pay. It says nothing about how well a host serves; its record does.</p></div>
+          <div class="faq__item"><h3>Can I change my app's rules later?</h3><p>No. They are fixed at launch.</p></div>
+          <div class="faq__item"><h3>Why do hosts put coin at stake?</h3><p>A host may burn coin it can never get back; you see how much before you pay. It says nothing about how well a host serves; its record does.</p></div>
           <div class="faq__item"><h3>Is Hearth live on mainnet?</h3><p>Yes. It runs on Lattice mainnet, and hosts are paid in the market's own coin.</p></div>
         </div>
       </div>
@@ -365,8 +364,8 @@
   <div class="wrap">
     <div class="closing__cta close--type">
       <div class="section-head">
-        <h2 id="close-h">A home for your app</h2>
-        <p>Pick your rules, hire hosts, and add two lines to your page. The launch guide walks you through it in under an hour.</p>
+        <h2 id="close-h">Launch an app</h2>
+        <p>Pick your rules, pay hosts, and add two lines to your page. The launch guide has each step.</p>
       </div>
       <a class="btn btn--primary btn--xl btn--wide" href="https://hearthnet.github.io/launch.html">Launch an app<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
     </div>
@@ -374,7 +373,7 @@
       <div class="grid">
         <div class="span-4 stack-4">
           <a class="nav__logo" href="#top" aria-label="Hearth"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 988 256" aria-hidden="true"><path fill="#2B2420" d="M36 28 H80 V228 H36 Z M176 28 H220 V228 H176 Z M80 84 H176 V112 H80 Z"/><path fill="#E8590C" d="M104 180 C104 164 108 152 112 140 C116 148 118 154 120 158 C120 138 124 122 128 104 C132 122 136 138 136 158 C138 154 140 148 144 140 C148 152 152 164 152 180 A24 24 0 0 1 104 180 Z" transform="translate(128,228) scale(1.0) translate(-128,-204)"/><g transform="translate(312,28)"><path fill="#2B2420" fill-rule="evenodd" d="M0 24 H28 V200 H0 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M0 130 A50 50 0 0 1 100 130 V200 H72 V130 A22 22 0 0 0 28 130 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M240.79 152 A60 60 0 1 0 227.96 178.57 L206.51 160.57 A32 32 0 0 1 152.34 152 Z M152.34 128 A32 32 0 0 1 211.66 128 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M264 140 A60 60 0 1 0 384 140 A60 60 0 1 0 264 140 Z M292 140 A32 32 0 1 0 356 140 A32 32 0 1 0 292 140 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M356 80 H384 V200 H356 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M406 80 H434 V200 H406 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M406 130 A50 50 0 0 1 456 80 H478 V108 H456 A22 22 0 0 0 434 130 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M510 40 H538 V200 H510 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M490 80 H562 V108 H490 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M576 24 H604 V200 H576 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M576 130 A50 50 0 0 1 676 130 V200 H648 V130 A22 22 0 0 0 604 130 Z"/></g></svg></a>
-          <p class="footer__lede">Backends anyone can host.</p>
+          <p class="footer__lede">A hosting market on Lattice.</p>
         </div>
         <div class="span-2 footer__col"><h3>Build</h3><ul><li><a href="#launch">How it works</a></li><li><a href="https://hearthnet.github.io/launch.html">Launch guide</a></li></ul></div>
         <div class="span-2 footer__col"><h3>Host</h3><ul><li><a href="#homelabs">Sell hosting</a></li><li><a href="https://hearthnet.github.io/sell.html">Seller guide</a></li></ul></div>
