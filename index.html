@@ -146,7 +146,7 @@
   <section class="hero hero--centred" data-enter aria-labelledby="hero-h">
     <div class="wrap"><div class="hero-text">
       <div class="hero__c">
-        <a class="pill" href="https://hearthnet.github.io/launch.html"><span>On testnet</span><span class="muted">Apps go live in under an hour</span></a>
+        <a class="pill" href="https://hearthnet.github.io/launch.html"><span>On mainnet</span><span class="muted">Apps go live in under an hour</span></a>
         <h1 id="hero-h">A backend for your web app, kept online by hosts you hire</h1>
         <p class="hero__lead">Store your app's data and files without running a server. Pay independent hosts by the day. Visitors write without an account or coin, and their browsers check what the hosts send back.</p>
         <div class="btn-row"><a class="btn btn--primary" href="https://hearthnet.github.io/launch.html">Launch an app</a><a class="btn btn--secondary" href="#homelabs">Sell hosting</a></div>
@@ -250,7 +250,7 @@
               <div class="ui ui-panel ui-code" data-ui="code">
                 <div class="ui-code__tabs"><span class="ui-code__tab is-on"><i class="ui-code__lang">JS</i>app.js</span><span class="ui-spacer"></span></div>
                 <pre class="ui-code__pre"><code><span class="ui-code__ln" data-n="1"><span class="k">const</span> db = <span class="k">await</span> <span class="f">connect</span>({</span>
-<span class="ui-code__ln" data-n="2">  chain: <span class="s">"Nexus/testnet/recipes"</span>,</span>
+<span class="ui-code__ln" data-n="2">  chain: <span class="s">"Nexus/recipes"</span>,</span>
 <span class="ui-code__ln" data-n="3">  node, sponsors,</span>
 <span class="ui-code__ln" data-n="4">});</span>
 <span class="ui-code__ln is-mark" data-n="5"><span class="k">await</span> db.<span class="f">set</span>(<span class="s">"r/soup"</span>, recipe);</span>
@@ -354,7 +354,7 @@
           <div class="faq__item"><h3>Is my app's data private?</h3><p>No. Anyone can read an app's data. Encrypt what should stay private before you write it.</p></div>
           <div class="faq__item"><h3>Can I change my app's rules later?</h3><p>No. They are fixed at launch, so test them on testnet first.</p></div>
           <div class="faq__item"><h3>Why do hosts put coin at stake?</h3><p>To show they're serious. A host burns coin it can never get back, and you see how much before you pay. It says nothing about how well a host serves; its record does.</p></div>
-          <div class="faq__item"><h3>Is Hearth live on mainnet?</h3><p>Not yet. It runs on the Lattice testnet, and hosts are paid in the market's own coin.</p></div>
+          <div class="faq__item"><h3>Is Hearth live on mainnet?</h3><p>Yes. It runs on Lattice mainnet, and hosts are paid in the market's own coin.</p></div>
         </div>
       </div>
     </div>

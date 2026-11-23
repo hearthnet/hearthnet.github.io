@@ -46,11 +46,11 @@ In the node's root, or with `--root`:
 hearth sell
 ```
 
-This sells hosting for up to 10 small chains under `Nexus/testnet` (see [Offer terms](#offer-terms)), at 10,000 market coin per chain per day (`--price 10000/day`; give `--price` to choose another), for 30 days, on the market `Nexus/testnet/lodger-3129cc`. It runs in the foreground.
+This sells hosting for up to 10 small chains under `Nexus` (see [Offer terms](#offer-terms)), at 10,000 market coin per chain per day (`--price 10000/day`; give `--price` to choose another), for 30 days, on the market `Nexus/hearth`. It runs in the foreground.
 
 It checks every flag, and that a Lattice node lives at `--root`, before it writes anything. A `--root` with no node stops with `no Lattice node at <root>`. Every subcommand takes `--help`.
 
-**The first sync of testnet takes about 1–2 hours and ~1.5 GB.** Until the node has synced the market, the seller prints `syncing market: h / H` (its tip against the best header its peers showed) and reads, funds, writes and burns nothing.
+**The first sync of Nexus and the market takes a few minutes.** Until the node has synced the market, the seller prints `syncing market: h / H` (its tip against the best header its peers showed) and reads, funds, writes and burns nothing.
 
 ## What it does
 
@@ -111,7 +111,7 @@ It moves what the sponsor's key holds on one chain (default the market), keeping
 
 Every write on the market costs a fee in market coin. Before it writes, the seller checks that its key holds three fees: for the offer, the URL record and a storage offer.
 
-You don't have to fund it. The seller's blocks pay the sponsor's key (1,000 market coin a market block on testnet), so for its first writes the seller moves four fees (enough for a close too) from the sponsor's key to its own, then starts lattice-sponsor. It moves them before the sponsor starts, so nothing else signs with that key at the same time. You see:
+You don't have to fund it. The seller's blocks pay the sponsor's key (1,000 market coin a market block), so for its first writes the seller moves four fees (enough for a close too) from the sponsor's key to its own, then starts lattice-sponsor. It moves them before the sponsor starts, so nothing else signs with that key at the same time. You see:
 
 ```
 moving 4 market coin of the sponsor key's block rewards to the seller's key for its first writes (lattice-sponsor starts once it has landed)
@@ -122,7 +122,7 @@ It moves them once the sponsor's key holds five fees: the four it moves, and the
 With `--node` (no sponsor beside it), or once an offer of yours is out, it moves nothing. If the key is short then, it prints:
 
 ```
-Send at least <n> coin on Nexus/testnet/lodger-3129cc to <address>, from any account that holds some, or earn it with this machine: hearth earn; this seller waits and checks again every 30 s. The sponsor's key holds the block rewards: hearth sweep moves them here while no lattice-sponsor signs with it.
+Send at least <n> coin on Nexus/hearth to <address>, from any account that holds some, or earn it with this machine: hearth earn --sponsor <url>; this seller waits and checks again every 30 s. The sponsor's key holds the block rewards: hearth sweep moves them here while no lattice-sponsor signs with it.
 ```
 
 Send market coin to the address from any account, buy it in the web app (see [Buy market coin](launch.md#1-buy-market-coin)), or earn it:
@@ -131,7 +131,7 @@ Send market coin to the address from any account, buy it in the web app (see [Bu
 hearth earn [--until <coins>] [--workers 1] [--sponsor <url>]
 ```
 
-`hearth earn` does work for a fee sponsor's payouts with this machine's processor, naming the seller's address. The sponsor pays the address in coin each time its earnings reach its payout. It stops once the address holds `--until` coins on the market (by default four fees: the seller's first writes and a close). The default sponsor is `https://lattice-testnet-apps-iad.fly.dev:8650/sponsor`.
+`hearth earn` does work for a fee sponsor's payouts with this machine's processor, naming the seller's address. The sponsor pays the address in coin each time its earnings reach its payout. It stops once the address holds `--until` coins on the market (by default four fees: the seller's first writes and a close). There is no default sponsor: give `--sponsor <url>`, a lattice-sponsor that pays out market coin for work.
 
 Buyers pay you in market coin, to the seller's address.
 
@@ -143,7 +143,7 @@ The coin you earn is yours to spend on hosting or storage, or to sell. Buyers of
 hearth sell-coin 300000 --price 3000 [--float 100]
 ```
 
-This locks 300,000 market coin from your seller key (a month of one chain at the default price) on Lattice's own exchange, for 3,000 `Nexus/testnet` coin for all of it. `--price` is what a buyer pays for the whole lot, in the coin of the market's parent chain. Before it signs, it checks the amounts and that your key keeps at least `--float` coin (default 100) for its fees. To sell block rewards, `hearth sweep` them to your seller key first.
+This locks 300,000 market coin from your seller key (a month of one chain at the default price) on Lattice's own exchange, for 3,000 `Nexus` coin for all of it. `--price` is what a buyer pays for the whole lot, in the coin of the market's parent chain. Before it signs, it checks the amounts and that your key keeps at least `--float` coin (default 100) for its fees. To sell block rewards, `hearth sweep` them to your seller key first.
 
 The running seller signs with the same key, so, like `hearth sweep`, it refuses while the seller runs or a lattice-sponsor answers on `--sponsor-port`, and says how to pause the seller without closing your offers.
 
@@ -152,14 +152,14 @@ Because a deposit can't be cancelled, a retry never locks a second lot by accide
 It prints the deposit and what a buyer pays:
 
 ```
-locked 300000 market coin on Nexus/testnet/lodger-3129cc for sale at 3000 Nexus/testnet coin: deposit <address>/3000/<nonce>
+locked 300000 market coin on Nexus/hearth for sale at 3000 Nexus coin: deposit <address>/3000/<nonce>
 transaction <cid>
-A buyer pays 3000 Nexus/testnet coin (and that chain's fee) on Nexus/testnet; Lattice credits it straight to <address> there, with nothing to claim, and the buyer takes the coin. ...
+A buyer pays 3000 Nexus coin (and that chain's fee) on Nexus; Lattice credits it straight to <address> there, with nothing to claim, and the buyer takes the coin. ...
 ```
 
-**Getting paid.** When a buyer pays, Lattice moves the price from the buyer to your address on `Nexus/testnet` in the same transaction. You don't claim anything, and nothing needs to run. Your seller key's address is the same on every chain, so the key you sell with is the key that holds the payment.
+**Getting paid.** When a buyer pays, Lattice moves the price from the buyer to your address on `Nexus` in the same transaction. You don't claim anything, and nothing needs to run. Your seller key's address is the same on every chain, so the key you sell with is the key that holds the payment.
 
-**No cancel.** Lattice has no cancel or refund for a deposit. The coin stays locked until someone buys it. The only way back is to buy it yourself like any buyer: pay its price to your own address on `Nexus/testnet` and take the coin, at a fee on each chain. Price it to sell.
+**No cancel.** Lattice has no cancel or refund for a deposit. The coin stays locked until someone buys it. The only way back is to buy it yourself like any buyer: pay its price to your own address on `Nexus` and take the coin, at a fee on each chain. Price it to sell.
 
 **Pricing.** `hearth status` shows the cheapest coin on sale on the market, in parent coin per market coin, and each of your deposits, with the buyer once one has paid for it.
 
@@ -168,21 +168,21 @@ A buyer pays 3000 Nexus/testnet coin (and that chain's fee) on Nexus/testnet; La
 Each pass prints, and `hearth status` prints once:
 
 ```
-market Nexus/testnet/lodger-3129cc at block 12561: the seller's key <address> holds 297; the sponsor's key <address> holds 52000 (its block rewards)
+market Nexus/hearth at block 12561: the seller's key <address> holds 297; the sponsor's key <address> holds 52000 (its block rewards)
 2 orders {"owed":1,"pending":1} and 0 renewals: earned 70000 coin from buyers, 70000 more settling
-owes hosting to Nexus/testnet/app1 (to market block 14001)
+owes hosting to Nexus/app1 (to market block 14001)
 storage pinned by the sponsor: 12.0 MiB of its 256.0 MiB budget, 1.0 MiB held for uploads being paid, 243.0 MiB left
 ```
 
 `hearth status` adds the exchange:
 
 ```
-exchange: the cheapest market coin on sale is 300000 for 3000 Nexus/testnet coin (0.01 each), of 4 open deposits
-on sale: 300000 for 3000 Nexus/testnet coin (0.01 each), deposit <address>/3000/<nonce>
-the seller's key holds 3000 on Nexus/testnet, where buyers of its coin pay it
+exchange: the cheapest market coin on sale is 300000 for 3000 Nexus coin (0.01 each), of 4 open deposits
+on sale: 300000 for 3000 Nexus coin (0.01 each), deposit <address>/3000/<nonce>
+the seller's key holds 3000 on Nexus, where buyers of its coin pay it
 ```
 
-A deposit someone has paid for says `bought by <address>, who paid you on Nexus/testnet` until they take the coin. The reads are bounded: the cheapest is of the first 1,000 deposit entries (it says so when there are more), your own are read by your address, and at most 20 of their payments are checked. The price per coin is exact; `~` marks one cut at 8 decimals.
+A deposit someone has paid for says `bought by <address>, who paid you on Nexus` until they take the coin. The reads are bounded: the cheapest is of the first 1,000 deposit entries (it says so when there are more), your own are read by your address, and at most 20 of their payments are checked. The price per coin is exact; `~` marks one cut at 8 decimals.
 
 *Earned* is what other buyers paid your key for hosting you owe or owed: settled orders (16 market blocks) judged *owed*, and settled renewals of those chains that bought time (not ones after a close). Void, full and taken orders, and your own orders, count in neither. *Settling* is what buyers paid in orders and renewals that have not settled yet. `hearth status` never waits: if the market isn't synced it says `market not synced (height X of Y)`, and each read has a deadline. With `--node`, the storage line is skipped, since the sponsor runs beside the remote node. The storage line comes from the sponsor's `GET /terms`: what it has pinned, what it holds for uploads still being paid, and what is left of the budget.
 
@@ -200,10 +200,10 @@ Each set of flags names its own offer. Running again with the same flags finds t
 |---|---|---|
 | `--price <coin>/<period>` | `10000/day` | Whole market coin per chain per period. The period is a number of market blocks, or `hour`, `day` or `week`, converted to market blocks at the market's block time. Give `--price` or `--offer`, not both. |
 | `--offer <file>` | none | An offer file, instead of `--price`. |
-| `--parent <path>` | `Nexus/testnet` | The chain the offer's chains go under. |
+| `--parent <path>` | `Nexus` | The chain the offer's chains go under. |
 | `--chains <n>` | `10` | How many chains the offer sells. |
 | `--id <id>` | from the terms | The offer's id, with `--price`. Without it: `o-` and 10 hex digits of a hash of the terms. |
-| `--market <path>` | `Nexus/testnet/lodger-3129cc` | The market chain. |
+| `--market <path>` | `Nexus/hearth` | The market chain. |
 | `--root <dir>` | found (see above) | The node's root. |
 | `--node <url>` | none | A node's operator listener, for a seller running elsewhere. Needs `--token-file`. |
 | `--token-file <file>` | none | An operator token for `--node`. |
@@ -250,7 +250,7 @@ The old defaults (5 s blocks, 1 MB blocks, 1 MB of state growth, 50 chains) allo
 To set other terms, write an offer file and pass `--offer`. `period` is in market blocks, or `"hour"`, `"day"` or `"week"`; `duration` is in market blocks (30 days when absent):
 
 ```json
-{ "id": "small", "parent": "Nexus/testnet", "price": 10000, "period": 1440, "duration": 43200,
+{ "id": "small", "parent": "Nexus", "price": 10000, "period": 1440, "duration": 43200,
   "capacity": 10, "maxBlockSize": 20000, "maxStateGrowth": 10000, "minTargetBlockTime": 30000,
   "maxNumberOfTransactionsPerBlock": 100, "modules": "any" }
 ```

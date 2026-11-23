@@ -31,7 +31,7 @@ Every subcommand finds the node, the seller's key and the market with these flag
 | `--token-file <file>` | none | The operator token for `--node`. |
 | `--key <file>` | `<root>/hearth/seller.json`, or `./hearth/seller.json` with `--node` | The seller's key. |
 | `--lattice <path>` | `lattice` | The `lattice` command. |
-| `--market <path>` | `Nexus/testnet/lodger-3129cc` | The market chain. |
+| `--market <path>` | `Nexus/hearth` | The market chain. |
 
 `--node` needs `--token-file`.
 
@@ -40,8 +40,8 @@ Every subcommand finds the node, the seller's key and the market with these flag
 Sells hosting from a running Lattice node (5.0.0 or newer), in the foreground: hosts the chains it sells, makes their blocks and the market's, and runs lattice-sponsor beside the node. See [Sell hosting](sell.md).
 
 ```
-hearth sell [--price 10000/day] [--parent Nexus/testnet] [--chains 10]
-            [--url https://host.example [--proof <url>]] [--market Nexus/testnet/lodger-3129cc]
+hearth sell [--price 10000/day] [--parent Nexus] [--chains 10]
+            [--url https://host.example [--proof <url>]] [--market Nexus/hearth]
             [--root <node root> | --node <url> --token-file <file>] [--key <file>] [--lattice lattice] [--offer offer.json]
             [--id <offer id>] [--storage-offer storage.json] [--interval 30] [--fee <n>] [--once]
             [--sponsor-bin lattice-sponsor] [--sponsor-port 8650] [--sponsor-url <https url>]
@@ -53,7 +53,7 @@ hearth sell [--price 10000/day] [--parent Nexus/testnet] [--chains 10]
 |---|---|---|
 | `--price <coin>/<period>` | `10000/day` | Whole market coin per chain per period; the period in market blocks or `hour`, `day`, `week`. Not with `--offer`. |
 | `--offer <file>` | none | An offer file instead of `--price`. |
-| `--parent <path>` | `Nexus/testnet` | With `--price`: the parent the offer's chains go under. |
+| `--parent <path>` | `Nexus` | With `--price`: the parent the offer's chains go under. |
 | `--chains <n>` | `10` | With `--price`: how many chains the offer sells. |
 | `--id <id>` | `o-` + 10 hex digits of a hash of the terms | With `--price`: the offer's id. |
 | `--url <url>` | none | Your public read URL. Without it, you sell key only. |
@@ -86,7 +86,7 @@ An offer sells for 30 days. Run `hearth sell` again to extend it: there is no au
 Prints once, without waiting (each read has a deadline; an unsynced market prints `market not synced (height X of Y)`), what the seller prints each pass: both keys' balances on the market, the seller's orders by verdict and its renewals, the coin they paid (settled, and still settling), the chains it owes hosting to and until which market block, the storage its sponsor has pinned against the budget, the market's cheapest coin on sale (parent coin per market coin), each of the seller key's open deposits and who paid for it, the key's balance on the market's parent, and whether a seller runs beside the node.
 
 ```
-hearth status [--market Nexus/testnet/lodger-3129cc] [--root <node root> | --node <url> --token-file <file>] [--key <file>]
+hearth status [--market Nexus/hearth] [--root <node root> | --node <url> --token-file <file>] [--key <file>]
               [--lattice lattice] [--sponsor-port 8650]
 ```
 
@@ -112,7 +112,7 @@ hearth unpin <cid> [--root <node root>] [--sponsor-port 8650]
 Closes every offer of the key still on sale. The close takes effect 10 market blocks after it is written; orders placed before then are owed. The seller keeps hosting, making blocks for and sponsoring each chain with paid time until that ends, then exits.
 
 ```
-hearth stop [--now] [--market Nexus/testnet/lodger-3129cc]
+hearth stop [--now] [--market Nexus/hearth]
             [--root <node root> | --node <url> --token-file <file>] [--key <file>] [--lattice lattice] [--fee <n>]
 ```
 
@@ -126,7 +126,7 @@ hearth stop [--now] [--market Nexus/testnet/lodger-3129cc]
 Moves what the sponsor's key (`sponsor.json` beside the seller's key) holds above the float on one chain to the seller's address. It keeps the float, the fees the sponsor holds for transactions it signed, and its fund deposits. It refuses while the seller runs or a lattice-sponsor answers on `--sponsor-port`, and says how to pause the seller without closing its offers. The seller funds its own first writes from the sponsor's key, so you need not sweep to start selling.
 
 ```
-hearth sweep [--float 100] [--chain <path>] [--sponsor-port 8650] [--market Nexus/testnet/lodger-3129cc]
+hearth sweep [--float 100] [--chain <path>] [--sponsor-port 8650] [--market Nexus/hearth]
              [--root <node root> | --node <url> --token-file <file>] [--key <file>] [--lattice lattice] [--fee <n>]
 ```
 
@@ -142,22 +142,22 @@ hearth sweep [--float 100] [--chain <path>] [--sponsor-port 8650] [--market Nexu
 Earns market coin for the seller's address with this machine's processor, through a fee sponsor's payouts. Makes the seller's key if there is none.
 
 ```
-hearth earn [--until <coins>] [--workers 1] [--sponsor https://lattice-testnet-apps-iad.fly.dev:8650/sponsor]
-            [--market Nexus/testnet/lodger-3129cc] [--root <node root> | --node <url> --token-file <file>] [--key <file>] [--lattice lattice]
+hearth earn [--until <coins>] [--workers 1] --sponsor <url>
+            [--market Nexus/hearth] [--root <node root> | --node <url> --token-file <file>] [--key <file>] [--lattice lattice]
 ```
 
 | Flag | Default | Description |
 |---|---|---|
 | `--until <coins>` | four of the market's `minRelayFee` | Stop once the address holds this much on the market. |
 | `--workers <n>` | `1` | Threads doing work. |
-| `--sponsor <url>` | `https://lattice-testnet-apps-iad.fly.dev:8650/sponsor` | The fee sponsor whose payouts it earns. |
+| `--sponsor <url>` | none (required) | A fee sponsor that pays out market coin for work. |
 
 ## hearth burn
 
 Burns coin for the seller's key: a plain transfer to its burn address on one chain. See [Burns](burns.md).
 
 ```
-hearth burn <coin> --chain <path> [--market Nexus/testnet/lodger-3129cc]
+hearth burn <coin> --chain <path> [--market Nexus/hearth]
             [--root <node root> | --node <url> --token-file <file>] [--key <file>] [--lattice lattice] [--fee <n>]
 ```
 
@@ -170,10 +170,10 @@ hearth burn <coin> --chain <path> [--market Nexus/testnet/lodger-3129cc]
 The key must exist. It prints the amount, the burn address, the transaction, and the burned total once it is in a block:
 
 ```
-burned 300 on Nexus/testnet for <address>
+burned 300 on Nexus for <address>
 to <burn address>
 transaction <cid>
-burned total on Nexus/testnet: 300 once it is in a block (was 0)
+burned total on Nexus: 300 once it is in a block (was 0)
 ```
 
 Each run burns again. To burn only up to a total, use `hearth sell --burn`.
@@ -183,7 +183,7 @@ Each run burns again. To burn only up to a total, use `hearth sell --burn`.
 Puts the seller key's market coin on sale on Lattice's exchange: a deposit on the market that a buyer takes by paying `--price` on the market's parent chain. See [Sell your coin](sell.md#sell-your-coin-hearth-sell-coin).
 
 ```
-hearth sell-coin <coin> --price <parent coin> [--float 100] [--again] [--sponsor-port 8650] [--market Nexus/testnet/lodger-3129cc]
+hearth sell-coin <coin> --price <parent coin> [--float 100] [--again] [--sponsor-port 8650] [--market Nexus/hearth]
                  [--root <node root> | --node <url> --token-file <file>] [--key <file>] [--lattice lattice] [--fee <n>]
 ```
 

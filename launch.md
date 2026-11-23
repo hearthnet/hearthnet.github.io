@@ -23,13 +23,13 @@ The page takes these settings in its URL:
 | Parameter | What it sets |
 |---|---|
 | `?node=` | The node it reads from and sends to. Point it at your own node's read URL. |
-| `?market=` | The market chain. Default `Nexus/testnet/lodger-3129cc`. |
-| `?sponsor=` | The fee sponsor used to earn parent coin on testnet. |
+| `?market=` | The market chain. Default `Nexus/hearth`. |
+| `?sponsor=` | A fee sponsor that pays out parent coin for work. None by default; **Earn with this device** shows only when one is given. |
 | `?blockSeconds=` | Seconds per market block, used only to show durations. Default `60`. |
 
 ## 1. Buy market coin
 
-Hosts are paid in the market chain's own coin, Hearth coin. Hosts earn it, and sell what they don't spend with `hearth sell-coin` (see [Sell your coin](sell.md#sell-your-coin-hearth-sell-coin)). On **Buy coin**, the page lists coin that sellers have locked on the market chain, each lot for a price in the parent chain's coin (`Nexus/testnet` coin). The cheapest per coin comes first.
+Hosts are paid in the market chain's own coin, Hearth coin. Hosts earn it, and sell what they don't spend with `hearth sell-coin` (see [Sell your coin](sell.md#sell-your-coin-hearth-sell-coin)). On **Buy coin**, the page lists coin that sellers have locked on the market chain, each lot for a price in the parent chain's coin (Nexus coin). The cheapest per coin comes first.
 
 Press **Buy** on a lot. The page then:
 
@@ -40,7 +40,7 @@ Press **Buy** on a lot. The page then:
 
 The fee for taking the coin comes out of it, so you get the lot less one coin at the minimum fee. If you reload, the purchase picks up where it left off.
 
-You need parent coin to pay. Anyone holding some can send it to your address. On testnet you can also earn it with **Earn with this device**: your browser does work for the fee sponsor, which pays your address each time your earnings reach its payout.
+You need parent coin to pay. Anyone holding some can send it to your address. Where a fee sponsor pays out parent coin, you can also earn it with **Earn with this device**: your browser does work for the fee sponsor, which pays your address each time your earnings reach its payout.
 
 You can also sell market coin from the same tab: lock an amount for a price in parent coin. It stays locked until someone pays. There is no cancel.
 
@@ -52,7 +52,7 @@ On **Launch a chain**, under **1. Your chain**:
 
 | Field | What it does |
 |---|---|
-| Name | Lowercase letters, digits and dashes, up to 40, starting with a letter or digit. The chain's path is the offer's parent plus this name, for example `Nexus/testnet/my-app`. |
+| Name | Lowercase letters, digits and dashes, up to 40, starting with a letter or digit. The chain's path is the offer's parent plus this name, for example `Nexus/my-app`. |
 | Size | A preset. **Small app**: 30 s blocks, 20 kB blocks, 10 kB state growth, 100 transactions per block (what a host sells by default). **Busy app (needs a seller with bigger limits)**: 5 s blocks, 1,000 kB blocks, 1 MB state growth, 1,000 transactions per block. No seller's default offer fits it; it fits only offers whose limits are at least this big. |
 | Coin you start with | Paid to your account in the genesis. Writes pay fees from it, unless a sponsor pays them. Rounded up to a multiple of 100, the block reward. Default 21,000. |
 | Who can write | A rules preset: **Anyone can write** (any key); **Each person edits only their own keys** (every key ends with its writer's address); **Append-only (write once)** (anyone adds a key, nobody changes it after); or **Upload your own .wasm** (your own policy modules). |
@@ -121,7 +121,7 @@ When paid time ends, a host may stop hosting your chain and drop its data. Anyon
 
 ## Check a host
 
-By default the page reads from one public testnet node. If your app pins its first block or a checkpoint, every value is checked against a block whose headers link back to it. One node alone can still serve old or made-up data; with two or more nodes run by different operators, a value is shown only from a block at least two of them report holding (in lattice-sdk, pass `connect` your app's `genesis` or a `checkpoint`, and a list of nodes). One node can also withhold records. Burns and block reads come from the node's API.
+By default the page reads from one public node, `https://rpc.lattice.build`. If your app pins its first block or a checkpoint, every value is checked against a block whose headers link back to it. One node alone can still serve old or made-up data; with two or more nodes run by different operators, a value is shown only from a block at least two of them report holding (in lattice-sdk, pass `connect` your app's `genesis` or a `checkpoint`, and a list of nodes). One node can also withhold records. Burns and block reads come from the node's API.
 
 To trust only yourself, run a node that hosts the market and open the page with:
 
@@ -165,7 +165,7 @@ The source repo has `tools/store.mjs`, which does all of this for one file of up
 
 ```
 node tools/store.mjs --key buyer.json --file photo.png \
-  [--node <read URL>] [--market Nexus/testnet/lodger-3129cc] [--offer <host>/<id> ...] [--min 1]
+  [--node <read URL>] [--market Nexus/hearth] [--offer <host>/<id> ...] [--min 1]
 ```
 
 `--min` is how many verified offers it needs. It refuses to run with fewer.

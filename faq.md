@@ -36,7 +36,7 @@ No. Lattice has no cancel or refund for a deposit. It stays on sale until someon
 
 ### Is this on mainnet?
 
-No. Hearth runs on testnet only.
+Yes. Hearth runs on Lattice mainnet.
 
 ### Can I get a refund?
 
@@ -86,7 +86,7 @@ Yes. Anyone can. Send a plain transfer to the host's burn address on any chain f
 
 ### Why aren't burns added up?
 
-Each chain's coin is its own. Nexus coin, testnet coin and market coin aren't worth the same, so the web app shows each chain's burn separately.
+Each chain's coin is its own. Nexus coin and market coin aren't worth the same, so the web app shows each chain's burn separately.
 
 ### Does `hearth sell --burn` burn every time it runs?
 
