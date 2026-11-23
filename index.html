@@ -1,83 +1,520 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hearth: app data served by hosts you pay</title>
+<script>(function(h){h.lang="en";h.dataset.type="software";h.dataset.radius="sharp";h.dataset.ground="sage";h.dataset.buttons="solid";h.setAttribute("data-motion","");})(document.documentElement)</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Keys, values and files for a static web page, served by hosts you pay by the day. Browsers check every read.">
+<meta property="og:type" content="website">
 <meta property="og:title" content="Hearth: app data served by hosts you pay">
-<meta property="og:description" content="Keys, values and files for a static web page, served by hosts you pay by the day.">
+<meta property="og:description" content="Pay hosts by the day to serve your app's data and files, or sell hosting with hearth sell.">
 <meta property="og:image" content="share.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#ffffff">
+<!-- <link rel="canonical" href="https://[domain to choose]/"> -->
+<meta name="site-kind" content="software">
+<meta name="page-type" content="software">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400..700&family=JetBrains+Mono:wght@400..500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/system.css">
+<link rel="stylesheet" href="assets/ui/cards.css">
+<link rel="stylesheet" href="assets/motion/motion.css">
+<link rel="stylesheet" href="assets/backgrounds/backgrounds.css">
+<link rel="stylesheet" href="assets/layout/layout.css">
+<link rel="stylesheet" href="assets/icons/icon.css">
 <style>
-  :root { --ink: #2B2420; --muted: #6b6159; --line: #e6dfd6; --accent: #E8590C; --bg: #fff; --code: #F6EFE6; color-scheme: light; }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 "Host Grotesk", system-ui, sans-serif; }
-  .wrap { max-width: 44rem; margin: 0 auto; padding: 0 max(20px, env(safe-area-inset-left)); }
-  header { border-bottom: 1px solid var(--line); }
-  header .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; padding-block: 16px; }
-  header svg { height: 22px; width: auto; display: block; }
-  nav { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-left: auto; font-size: 15px; }
-  a { color: var(--ink); text-underline-offset: 3px; }
-  a:hover { color: var(--accent); }
-  nav a { text-decoration: none; }
-  main.wrap { padding-block: 48px 64px; }
-  h1 { font-size: 2.2rem; line-height: 1.15; margin: 0 0 16px; text-wrap: balance; }
-  h2 { font-size: 1.25rem; margin: 48px 0 8px; }
-  h3 { font-size: 1rem; margin: 20px 0 2px; }
-  p, ul, ol { margin: 0 0 12px; }
-  ol, ul { padding-left: 1.25em; }
-  li { margin-bottom: 6px; }
-  .muted { color: var(--muted); }
-  code, pre { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 14px; }
-  code { background: var(--code); padding: 1px 5px; border-radius: 3px; }
-  pre { background: var(--code); padding: 14px 16px; border-radius: 4px; overflow-x: auto; line-height: 1.5; margin: 0 0 12px; }
-  pre code { background: none; padding: 0; }
-  footer { border-top: 1px solid var(--line); font-size: 15px; color: var(--muted); }
-  footer .wrap { display: flex; flex-wrap: wrap; gap: 4px 20px; padding-block: 20px; }
-  footer a { color: var(--muted); }
+:root {
+  --p-bg: #ffffff; --p-surface: #f6efe6; --p-ink: #2b2420; --p-muted: #6e6965;
+  --p-accent: #e8590c; --p-accent-ink: #111111; --p-action: #e8590c; --p-action-ink: #111111;
+  --p-inv-bg: #2b2420; --p-inv-surface: #38312d; --p-inv-ink: #ffffff; --p-inv-muted: #a8a4a2;
+  --p-inv-accent: #e8590c; --p-inv-accent-ink: #111111; --p-inv-action: #e8590c; --p-inv-action-ink: #111111;
+  --font-display: "Host Grotesk", system-ui, sans-serif;
+  --font-text: "Host Grotesk", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --display-weight: 500;
+  --display-tracking: -0.035em;
+  --display-tracking-xl: -0.04em;
+}
 </style>
-</head>
-<body>
-<header><div class="wrap">
-  <a href="./" aria-label="Hearth"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 988 256" aria-hidden="true"><path fill="#2B2420" d="M36 28 H80 V228 H36 Z M176 28 H220 V228 H176 Z M80 84 H176 V112 H80 Z"/><path fill="#E8590C" d="M104 180 C104 164 108 152 112 140 C116 148 118 154 120 158 C120 138 124 122 128 104 C132 122 136 138 136 158 C138 154 140 148 144 140 C148 152 152 164 152 180 A24 24 0 0 1 104 180 Z" transform="translate(128,228) scale(1.0) translate(-128,-204)"/><g transform="translate(312,28)"><path fill="#2B2420" fill-rule="evenodd" d="M0 24 H28 V200 H0 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M0 130 A50 50 0 0 1 100 130 V200 H72 V130 A22 22 0 0 0 28 130 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M240.79 152 A60 60 0 1 0 227.96 178.57 L206.51 160.57 A32 32 0 0 1 152.34 152 Z M152.34 128 A32 32 0 0 1 211.66 128 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M264 140 A60 60 0 1 0 384 140 A60 60 0 1 0 264 140 Z M292 140 A32 32 0 1 0 356 140 A32 32 0 1 0 292 140 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M356 80 H384 V200 H356 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M406 80 H434 V200 H406 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M406 130 A50 50 0 0 1 456 80 H478 V108 H456 A22 22 0 0 0 434 130 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M510 40 H538 V200 H510 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M490 80 H562 V108 H490 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M576 24 H604 V200 H576 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M576 130 A50 50 0 0 1 676 130 V200 H648 V130 A22 22 0 0 0 604 130 Z"/></g></svg></a>
-  <nav aria-label="Main"><a href="launch.html">Launch guide</a><a href="sell.html">Seller guide</a><a href="docs.html">Docs</a><a href="https://github.com/hearthnet/hearth">GitHub</a></nav>
-</div></header>
-<main class="wrap">
-  <h1>App data served by hosts you pay</h1>
-  <p>Hearth stores keys, values and files for a static web page on its own Lattice chain. You pay hosts by the day to serve it. Visitors write without an account or coin, and their browsers check every read against the chain.</p>
-  <p class="muted">Runs on Lattice mainnet; the market chain is <code>Nexus/hearth</code>.</p>
+<link rel="stylesheet" href="assets/ui/base.css">
+<link rel="stylesheet" href="assets/ui/window/fragment.css">
+<link rel="stylesheet" href="assets/ui/checklist/fragment.css">
+<link rel="stylesheet" href="assets/ui/code/fragment.css">
+<link rel="stylesheet" href="assets/ui/notify/fragment.css">
+<link rel="stylesheet" href="assets/ui/terminal-run/fragment.css">
+<script>document.documentElement.classList.add('m-enter');setTimeout(()=>document.documentElement.classList.add('m-enter-done'),700)</script>
+<script src="assets/backgrounds/backgrounds.js"></script>
+<script>document.documentElement.classList.add('mo-js');setTimeout(()=>document.documentElement.classList.add('mo-safe'),2500)</script>
+<link rel="modulepreload" href="assets/moments/moments.js">
+<link rel="modulepreload" href="assets/moments/lib.js">
+<link rel="modulepreload" href="assets/moments/liquid-type/moment.js">
+<!-- page CSS: inside visuals only -->
+<style>
+  /* the hero's window: the Hearth app, its hosts beside the open order (app-frame recipe) */
+  .app.ui { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); background: var(--u-bg); border: 1px solid var(--u-border); border-radius: var(--u-r); box-shadow: var(--u-shadow); }
+  .app > .app__pane { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+  .app > .app__pane + .app__pane { border-left: 1px solid var(--u-line); }
+  .app > .app__pane > .ui-panel { width: 100%; border: 0; border-radius: 0; box-shadow: none; }
+  .hero--centred .hero__window > .ly-piece { width: min(1040px, calc(100% - 2 * var(--s-6))); }
+  .app > .app__pane::after { content: ""; position: absolute; inset: auto 0 0 0; height: 64px; background: linear-gradient(transparent, var(--u-bg)); pointer-events: none; }
+  @media (max-width: 1279px) {
+    .app.ui { grid-template-columns: minmax(0, 1fr); }
+    .app > .app__pane--list { display: none; }
+    .app > .app__pane + .app__pane { border-left: 0; }
+  }
+  .hero__window .ui-check__label::after { display: none; }
+  .hero__window .ui-check.is-done .ui-check__label { color: var(--u-ink); }
+  .hero--centred .hero__lead { color: var(--ink, var(--p-ink)); }
+  /* the steps' panels */
+  #launch .panel { --p-h: 336px; }
+  @media (min-width: 640px) { #homelabs .frame .ui-term { width: 560px; } }
+  /* the hero window: the hosts list takes the sidebar's room, so each host's checked burn, blocks or domain reads whole */
+  .hero__window .ui-win__body { grid-template-columns: minmax(0, 1fr); }
+  .hero__window .ui-win__side { display: none; }
+  .hero__window :is(.ui-win__cols, .ui-win__row) { grid-template-columns: 24px 104px minmax(0, 1fr) 116px 28px; }
+  .statement-facts { margin-top: var(--s-8); }
+  #questions .q-frame { --ratio: 84%; margin-top: var(--s-5); }
+  @media (min-width: 640px) and (max-width: 1023px) { #launch { --h: 2 } }
+  @media (min-width: 1024px) and (max-width: 1279px) { #launch, #questions { --h: 2 } .statement-facts { margin-top: var(--s-5); } }
+  @media (max-width: 1023px) { #questions .q-frame { --ratio: 22%; } }
+  @media (min-width: 640px) and (max-width: 799px) { #questions .q-frame { --ratio: 9%; } }
+  @media (max-width: 639px) {
+    #launch { --hm: 2; }
+    #homelabs .frame--fill { flex: none; height: 200px; }
+    .statement-facts, .hero--centred .pill { display: none; }
+    #questions { --hm: 2; }
+    #questions .q-frame { --ratio: 90%; }
+  }
+  @media (max-width: 359px) {
+    #homelabs { --hm: 2; }
+    #homelabs .frame--fill { height: 240px; }
+  }
+  @media (max-width: 639px) { #launch .panel { --p-h: 220px; } }
+  /* phone: the sell command wraps onto a second row rather than lose its flags */
+  @media (max-width: 639px) { #homelabs .ui-term__cmd { height: auto; flex-wrap: wrap; } #homelabs .ui-term__typed { white-space: normal; overflow: visible; flex: 1 1 0; } }
+  /* the page's ground: one quiet swarm of hosts behind the whole page (an SVG in a layer as tall as the
+     page, so it scrolls with the content; aria-hidden, no text). It sits under every section (z -1, above only the page's own background); the one section that
+     paints a ground lets it through at 85%, which over white reads as the same cream. It keeps clear of
+     every block of words and every panel (measured in script). */
+  .page-swarm { position: absolute; top: 0; left: 0; width: 100%; z-index: -1; pointer-events: none; overflow: hidden;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 6%, #000 94%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, #000 6%, #000 94%, transparent 100%); }
+  .page-swarm { opacity: 0; transition: opacity 2s ease; }
+  .page-swarm.is-on { opacity: 1; }
+  .page-swarm > svg { position: absolute; top: 0; left: 0; overflow: visible; }
+  .page-swarm line { stroke: var(--p-ink); stroke-width: 1; transition: opacity 4s ease; }
+  /* a host breathes on its own slow clock; a new one waits dim; one going fades out (opacity: compositor-only) */
+  .swarm-host { position: absolute; top: 0; left: 0; border-radius: 50%; pointer-events: none; will-change: opacity;
+    background: radial-gradient(var(--p-accent) 0 16%, color-mix(in srgb, var(--p-accent) 30%, transparent) 20%, transparent 70%);
+    opacity: var(--o); animation: swarm-breathe var(--d) ease-in-out var(--delay) infinite alternate; }
+  .swarm-host.is-going { animation: swarm-out 4s ease forwards; }
+  @keyframes swarm-breathe { from { opacity: calc(var(--o) * .45); } to { opacity: var(--o); } }
+  @keyframes swarm-out { to { opacity: 0; } }
+  /* a write in flight: a faint dot the compositor moves */
+  .swarm-write { position: absolute; top: 0; left: 0; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; pointer-events: none; opacity: .5;
+    background: radial-gradient(var(--p-accent) 30%, transparent 70%); will-change: transform; }
+  @media print { .page-swarm { display: none; } }
+  /* small links stay charcoal on hover: ember on white is under 4.5:1 for small text */
+  .menu-col a:hover, .footer ul a:hover { color: var(--ink); }
+</style>
+<!-- type: software
+     deal: hero centred (dealt twice: triptych has one button, the page serves two buyers), nav mega, close type,
+     footer columns, rhythm surface-pairs, buttons solid, mark wordmark (replaced by the client's Hearth lockup),
+     ground sage, palette: the client's own colours through start.mjs brand (ember #E8590C accent, charcoal
+     #2B2420 ink, cream #F6EFE6 surface on a white ground; the Hearth logo kit), type host
+     moments: liquid-type in #statement -->
+<header class="nav">
+  <div class="wrap nav__bar">
+    <a class="skip-link" href="#top">Skip to content</a>
+    <a class="nav__logo" href="#top" aria-label="Hearth"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 988 256" aria-hidden="true"><path fill="#2B2420" d="M36 28 H80 V228 H36 Z M176 28 H220 V228 H176 Z M80 84 H176 V112 H80 Z"/><path fill="#E8590C" d="M104 180 C104 164 108 152 112 140 C116 148 118 154 120 158 C120 138 124 122 128 104 C132 122 136 138 136 158 C138 154 140 148 144 140 C148 152 152 164 152 180 A24 24 0 0 1 104 180 Z" transform="translate(128,228) scale(1.0) translate(-128,-204)"/><g transform="translate(312,28)"><path fill="#2B2420" fill-rule="evenodd" d="M0 24 H28 V200 H0 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M0 130 A50 50 0 0 1 100 130 V200 H72 V130 A22 22 0 0 0 28 130 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M240.79 152 A60 60 0 1 0 227.96 178.57 L206.51 160.57 A32 32 0 0 1 152.34 152 Z M152.34 128 A32 32 0 0 1 211.66 128 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M264 140 A60 60 0 1 0 384 140 A60 60 0 1 0 264 140 Z M292 140 A32 32 0 1 0 356 140 A32 32 0 1 0 292 140 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M356 80 H384 V200 H356 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M406 80 H434 V200 H406 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M406 130 A50 50 0 0 1 456 80 H478 V108 H456 A22 22 0 0 0 434 130 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M510 40 H538 V200 H510 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M490 80 H562 V108 H490 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M576 24 H604 V200 H576 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M576 130 A50 50 0 0 1 676 130 V200 H648 V130 A22 22 0 0 0 604 130 Z"/></g></svg></a>
+    <nav class="nav__links" aria-label="Main">
+      <div class="nav__item"><a class="nav__link" href="#launch">How it works</a></div>
+      <div class="nav__item"><a class="nav__link" href="https://hearthnet.github.io/docs.html">Docs</a></div>
+    </nav>
+    <div class="nav__actions">
+      <a class="nav__link" href="#homelabs">Sell hosting</a>
+      <a class="btn btn--primary" href="https://hearthnet.github.io/launch.html">Launch an app</a>
+    </div>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 13h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</header>
 
-  <h2 id="launch">Launch an app</h2>
-  <ol>
-    <li>Choose who can write: anyone any key, each address only under its own keys, or each key once. The rule is fixed at launch.</li>
-    <li>Pay one or more hosts up front for the days you want. If one stops, the others keep serving; renew only the ones that stayed up.</li>
-    <li>Read and write from your page, hosted anywhere static:</li>
-  </ol>
-<pre><code>const db = await connect({ chain: "Nexus/my-app", node, sponsors });
-await db.set("r/soup", recipe);
-const soup = await db.get("r/soup");</code></pre>
-  <p><a href="launch.html">Launch guide</a></p>
+<div class="page-swarm" id="page-swarm" aria-hidden="true"></div>
+<main id="top">
+  <section class="hero hero--centred" data-enter aria-labelledby="hero-h">
+    <div class="wrap"><div class="hero-text">
+      <div class="hero__c">
+        <a class="pill" href="https://hearthnet.github.io/launch.html"><span>On Lattice mainnet</span></a>
+        <h1 id="hero-h">App data served by hosts you pay</h1>
+        <div class="btn-row"><a class="btn btn--primary" href="https://hearthnet.github.io/launch.html">Launch an app</a><a class="btn btn--secondary" href="#homelabs">Sell hosting</a></div>
+      </div>
+      <div class="hero__window" role="img" aria-label="Hearth showing the hosts serving an app, with each host's price, domain or stake, and the steps of hiring one more">
+        <div class="ly-piece" aria-hidden="true">
+          <div class="ui app">
+            <div class="app__pane app__pane--list">
+              <div class="ui ui-panel ui-win" data-ui="window" data-open="Serving" data-work="Syncing" data-done="Serving">
+                <div class="ui-win__bar">
+                  <span class="ui-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                  <span class="ui-win__crumb">recipes <i>/</i> <b>Hosts</b></span>
+                  <span class="ui-spacer"></span>
+                </div>
+                <div class="ui-win__body">
+                  <nav class="ui-win__side" aria-hidden="true">
+                    <span class="ui-win__nav is-on"><svg class="ui-icon" viewBox="0 0 16 16"><path d="M2.5 4h11v3h-11zM2.5 9h11v3h-11z"/></svg>Hosts<em>3</em></span>
+                    <span class="ui-win__nav"><svg class="ui-icon" viewBox="0 0 16 16"><path d="M4 2.5h8v11H4zM6 6h4M6 9h4"/></svg>Orders<em>5</em></span>
+                    <span class="ui-win__nav"><svg class="ui-icon" viewBox="0 0 16 16"><path d="M3 4.5h10v8H3zM3 7h10"/></svg>Storage</span>
+                    <span class="ui-win__nav"><svg class="ui-icon" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>Offers</span>
+                  </nav>
+                  <div class="ui-win__main">
+                    <div class="ui-win__cols" aria-hidden="true"><span>Host</span><span>Terms</span><span>Status</span><span>Left</span></div>
+                    <ul class="ui-win__rows">
+                      <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="1">IA</span><span class="ui-win__who">apps-iad</span><span class="ui-win__sub">Domain verified · 12,000 a day</span><span class="ui-win__st is-done" data-st>Serving</span><span class="ui-win__age">29d</span></li>
+                      <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="3">BR</span><span class="ui-win__who">basement-rack</span><span class="ui-win__sub">Domain verified · 8,000 a day</span><span class="ui-win__st is-done" data-st>Serving</span><span class="ui-win__age">12d</span></li>
+                      <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="4">7F</span><span class="ui-win__who">7f3a…c21e</span><span class="ui-win__sub">No domain · 5,000 at stake</span><span class="ui-win__st" data-st>Syncing</span><span class="ui-win__age">30d</span></li>
+                      <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="2">GS</span><span class="ui-win__who">gpu-shed</span><span class="ui-win__sub">Stopped serving a day ago</span><span class="ui-win__st is-you" data-st>Not renewed</span><span class="ui-win__age">-</span></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="app__pane app__pane--open" data-ui-loop>
+              <div class="ui ui-panel ui-checks" data-ui="checklist">
+                <div class="ui-checks__head">
+                  <div class="ui-title">Hiring 7f3a…c21e</div>
+                  <span class="ui-spacer"></span>
+                  <div class="ui-meta" data-checks-count>3 of 4</div>
+                </div>
+                <div class="ui-checks__bar"><i data-checks-bar style="--k:0.75"></i></div>
+                <ul class="ui-checks__list">
+                  <li class="ui-check is-done"><span class="ui-check__box"><svg viewBox="0 0 16 16"><path d="m4.5 8.2 2.3 2.3 4.7-5"/></svg></span><span class="ui-check__label">Paid up front for 30 days</span></li>
+                  <li class="ui-check is-done"><span class="ui-check__box"><svg viewBox="0 0 16 16"><path d="m4.5 8.2 2.3 2.3 4.7-5"/></svg></span><span class="ui-check__label">Checked its 5,000 coin at stake</span></li>
+                  <li class="ui-check is-done"><span class="ui-check__box"><svg viewBox="0 0 16 16"><path d="m4.5 8.2 2.3 2.3 4.7-5"/></svg></span><span class="ui-check__label">Copied your data from two hosts</span></li>
+                  <li class="ui-check"><span class="ui-check__box"><svg viewBox="0 0 16 16"><path d="m4.5 8.2 2.3 2.3 4.7-5"/></svg></span><span class="ui-check__label">Serving your app</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </section>
 
-  <h2 id="sell">Sell hosting</h2>
-  <p>In the root of a running Lattice node (5.0.0 or newer):</p>
-<pre><code>npx @hearthnet/hearth sell</code></pre>
-  <p>You set a daily price. Apps pay up front; your machine makes each app's blocks. Spend what you earn on hosting, or sell it with <code>hearth sell-coin</code>.</p>
-  <p><a href="sell.html">Seller guide</a></p>
+  <section class="section" id="launch" aria-labelledby="launch-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="launch-h">Launch an app</h2>
+      </div>
+      <div class="grid">
+        <article class="card card--row card--open span-4">
+          <span class="step-num">1</span>
+          <h3>Choose who can write</h3>
+          <p>Pick one rule for your app's data. Every host enforces it, and it can't change after launch.</p>
+          <div class="panel">
+            <div class="stage stage--fade-b"><div class="at-rise to-edge" style="--w: 380px; --ax: max(24px, 50% - 190px); --ay: 40px">
+              <div class="ui ui-panel ui-code" data-ui="code">
+                <div class="ui-code__tabs"><span class="ui-code__tab is-on">Rules</span><span class="ui-spacer"></span></div>
+                <pre class="ui-code__pre"><code><span class="ui-code__ln" data-n="1"><span class="c">// who may write which keys</span></span>
+<span class="ui-code__ln" data-n="2">anyone      <span class="c">any key</span></span>
+<span class="ui-code__ln is-mark" data-n="3"><span class="f">own keys</span>    <span class="c">only under your address</span></span>
+<span class="ui-code__ln" data-n="4">write once  <span class="c">each key set one time</span></span></code></pre>
+              </div>
+            </div></div>
+          </div>
+        </article>
+        <article class="card card--row card--open span-4">
+          <span class="step-num">2</span>
+          <h3>Hire hosts</h3>
+          <p>Pay one or more hosts up front for the days you want. If one stops, the others keep serving; renew only the ones that stayed up.</p>
+          <div class="panel">
+            <div class="stage stage--fade-b"><div class="at-rise fit" style="--fit-max: 340px; --ax: max(24px, 50% - 170px); --ay: 40px">
+              <div class="ui ui-notify" data-ui="notify">
+                <ul class="ui-notify__list" data-notify-list>
+                  <li class="ui-note"><span class="ui-note__ico"><svg class="ui-icon" viewBox="0 0 16 16"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg></span><span class="ui-note__text"><span class="ui-note__title">basement-rack is serving<time>now</time></span><span class="ui-note__body">Paid through 14 December</span></span></li>
+                  <li class="ui-note"><span class="ui-note__ico"><svg class="ui-icon" viewBox="0 0 16 16"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg></span><span class="ui-note__text"><span class="ui-note__title">apps-iad renewed<time>2h</time></span><span class="ui-note__body">Paid for 30 more days</span></span></li>
+                  <li class="ui-note"><span class="ui-avatar ui-note__av" data-tone="2">GS</span><span class="ui-note__text"><span class="ui-note__title">gpu-shed not renewed<time>1d</time></span><span class="ui-note__body">Stopped serving a day ago</span></span></li>
+                </ul>
+              </div>
+            </div></div>
+          </div>
+        </article>
+        <article class="card card--row card--open span-4">
+          <span class="step-num">3</span>
+          <h3>Read and write from your page</h3>
+          <p>Host the page anywhere static, like GitHub Pages. Visitors' browsers save and load the data directly.</p>
+          <div class="panel">
+            <div class="stage stage--fade-b"><div class="at-rise to-edge" style="--w: 380px; --ax: max(24px, 50% - 190px); --ay: 40px">
+              <div class="ui ui-panel ui-code" data-ui="code">
+                <div class="ui-code__tabs"><span class="ui-code__tab is-on"><i class="ui-code__lang">JS</i>app.js</span><span class="ui-spacer"></span></div>
+                <pre class="ui-code__pre"><code><span class="ui-code__ln" data-n="1"><span class="k">const</span> db = <span class="k">await</span> <span class="f">connect</span>({</span>
+<span class="ui-code__ln" data-n="2">  chain: <span class="s">"Nexus/recipes"</span>,</span>
+<span class="ui-code__ln" data-n="3">  node, sponsors,</span>
+<span class="ui-code__ln" data-n="4">});</span>
+<span class="ui-code__ln is-mark" data-n="5"><span class="k">await</span> db.<span class="f">set</span>(<span class="s">"r/soup"</span>, recipe);</span>
+<span class="ui-code__ln" data-n="6"><span class="k">const</span> soup = <span class="k">await</span> db.<span class="f">get</span>(<span class="s">"r/soup"</span>);</span></code></pre>
+              </div>
+            </div></div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
 
-  <h2 id="checks">What hosts can and can't do</h2>
-  <ul>
-    <li>Every value a browser reads is checked against your app's chain. Read from two or more hosts and a value shows only when two agree; one host alone could still serve old data.</li>
-    <li>A write your rules refuse is refused by every host.</li>
-    <li>Each host's serving record, stake and domain are read from the chain, not from the host.</li>
-  </ul>
+  <section class="section statement" id="statement" aria-labelledby="statement-h">
+    <div class="wrap">
+      <div data-moment="liquid-type" class="section-head" style="max-width:none">
+        <h2 id="statement-h" class="mo-lt__type">What hosts can and can't do</h2>
+      </div>
+      <div class="grid statement-facts">
+        <div class="span-4 stack-2"><h3>Reads are checked</h3><p>Every value is checked against your app's chain. Read from two or more hosts and a value shows only when two agree; one host alone could still serve old data.</p></div>
+        <div class="span-4 stack-2"><h3>Rules hold everywhere</h3><p>A write your rules refuse is refused by every host, so no single host can let it through.</p></div>
+        <div class="span-4 stack-2"><h3>Host records are on the chain</h3><p>Each host's serving record, stake and domain, read from the chain before you pay.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section ground-surface" id="homelabs" aria-labelledby="homelabs-h">
+    <div class="wrap">
+      <div class="grid grid--top fill">
+        <div class="span-5 stack-5">
+          <h2 id="homelabs-h">Sell hosting</h2>
+          <p class="t-lead">Run <code>hearth sell</code> next to your Lattice node (5.0.0 or newer). You set a daily price; it serves each app that pays.</p>
+          <ul class="facts-list stack-3">
+            <li>Apps pay up front, before you serve anything</li>
+            <li>Spend what you earn on hosting and storage, or sell it with <code>hearth sell-coin</code></li>
+            <li>Your machine makes each app's blocks, so no miners are needed</li>
+            <li>Without a domain, you're listed under your key</li>
+            <li>Optionally burn coin with <code>hearth burn</code>; buyers see how much</li>
+          </ul>
+          <a class="link" href="https://hearthnet.github.io/sell.html">Read the seller guide</a>
+        </div>
+        <div class="frame frame--split frame--fill frame--lit span-6 start-7">
+          <div class="stage stage--fade-br"><div class="at-rise to-edge" style="--w: 560px; --ay: 56px" data-ui-loop>
+            <div class="ui ui-panel ui-term" data-ui="terminal-run">
+              <div class="ui-term__head">
+                <span class="ui-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="ui-term__title">homelab/node</span>
+                <span class="ui-meta">sh</span>
+                <span class="ui-spacer"></span>
+              </div>
+              <div class="ui-term__screen" data-term-screen>
+                <div class="ui-term__track" data-term-track>
+                  <div class="ui-term__ln ui-term__cmd"><span class="ui-term__cwd">~/lab</span><span class="ui-term__sig">$</span><span class="ui-term__typed" data-term-cmd>hearth sell</span></div>
+                  <div class="ui-term__ln ui-term__meter" data-term-out data-term-meter><span class="ui-term__bar" style="--p:1"><i></i></span><span class="ui-term__count" data-term-count>4 of 4 steps</span></div>
+                  <div class="ui-term__ln ui-term__log" data-term-out data-term-step><svg class="ui-term__tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg><span class="ui-term__path">waiting for coin</span><span class="ui-term__n">market</span><span class="ui-term__t">in</span></div>
+                  <div class="ui-term__ln ui-term__log" data-term-out data-term-step><svg class="ui-term__tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg><span class="ui-term__path">offer written</span><span class="ui-term__n">your price</span><span class="ui-term__t">ok</span></div>
+                  <div class="ui-term__ln ui-term__log" data-term-out data-term-step><svg class="ui-term__tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg><span class="ui-term__path">order paid</span><span class="ui-term__n">30 days</span><span class="ui-term__t">ok</span></div>
+                  <div class="ui-term__ln ui-term__log" data-term-out data-term-step><svg class="ui-term__tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg><span class="ui-term__path">chain created</span><span class="ui-term__n">recipes</span><span class="ui-term__t">hosted</span></div>
+                  <div class="ui-term__ln ui-term__gap" data-term-out aria-hidden="true"></div>
+                  <div class="ui-term__ln ui-term__sum" data-term-out><span class="ui-term__key">Seller</span><span class="ui-term__val">0x7f3a…c21e</span><span class="ui-term__dim">(key only)</span></div>
+                  <div class="ui-term__ln ui-term__sum" data-term-out><span class="ui-term__key">Earned</span><span class="ui-term__val">paid up front</span><span class="ui-term__dim">(30 days)</span></div>
+                  <div class="ui-term__ln ui-term__done" data-term-out data-term-done><span class="ui-term__ok"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 8.3 2.4 2.4 4.6-5"/></svg></span><b>Serving</b><span class="ui-term__dim">next pass in 30s</span></div>
+                  <div class="ui-term__ln ui-term__cmd" data-term-next><span class="ui-term__cwd">~/lab</span><span class="ui-term__sig">$</span><span class="ui-term__typed"></span><i class="ui-term__caret" aria-hidden="true"></i></div>
+                </div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
 
 </main>
-<footer><div class="wrap">
-  <span>Hearth, on Lattice</span><a href="https://github.com/hearthnet/hearth">Source</a><a href="https://lattice.build/docs/">Lattice docs</a><a href="https://lattice.build/explorer/">Explorer</a>
-</div></footer>
-</body>
-</html>
+
+<footer class="footer closing" id="contact" aria-label="Footer">
+  <div class="wrap">
+    <div class="closing__links">
+      <div class="grid">
+        <div class="span-4 stack-4">
+          <a class="nav__logo" href="#top" aria-label="Hearth"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 988 256" aria-hidden="true"><path fill="#2B2420" d="M36 28 H80 V228 H36 Z M176 28 H220 V228 H176 Z M80 84 H176 V112 H80 Z"/><path fill="#E8590C" d="M104 180 C104 164 108 152 112 140 C116 148 118 154 120 158 C120 138 124 122 128 104 C132 122 136 138 136 158 C138 154 140 148 144 140 C148 152 152 164 152 180 A24 24 0 0 1 104 180 Z" transform="translate(128,228) scale(1.0) translate(-128,-204)"/><g transform="translate(312,28)"><path fill="#2B2420" fill-rule="evenodd" d="M0 24 H28 V200 H0 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M0 130 A50 50 0 0 1 100 130 V200 H72 V130 A22 22 0 0 0 28 130 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M240.79 152 A60 60 0 1 0 227.96 178.57 L206.51 160.57 A32 32 0 0 1 152.34 152 Z M152.34 128 A32 32 0 0 1 211.66 128 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M264 140 A60 60 0 1 0 384 140 A60 60 0 1 0 264 140 Z M292 140 A32 32 0 1 0 356 140 A32 32 0 1 0 292 140 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M356 80 H384 V200 H356 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M406 80 H434 V200 H406 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M406 130 A50 50 0 0 1 456 80 H478 V108 H456 A22 22 0 0 0 434 130 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M510 40 H538 V200 H510 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M490 80 H562 V108 H490 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M576 24 H604 V200 H576 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M576 130 A50 50 0 0 1 676 130 V200 H648 V130 A22 22 0 0 0 604 130 Z"/></g></svg></a>
+        </div>
+        <div class="span-2 footer__col"><h3>Build</h3><ul><li><a href="#launch">How it works</a></li><li><a href="https://hearthnet.github.io/launch.html">Launch guide</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Host</h3><ul><li><a href="#homelabs">Sell hosting</a></li><li><a href="https://hearthnet.github.io/sell.html">Seller guide</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Lattice</h3><ul><li><a href="https://lattice.build/docs/">Lattice docs</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Source</h3><ul><li><a href="https://github.com/hearthnet/hearth">GitHub</a></li><li><a href="https://lattice.build/explorer/">Explorer</a></li></ul></div>
+      </div>
+      <div class="footer__legal">
+        <span>&copy; 2026 Hearth. Open source, on Lattice.</span>
+        <div class="socials"></div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* The page's ground: one quiet swarm of hosts behind the landing page, each
+   holding the whole app. A write passes host to host; now and then a host goes
+   dark and another lights nearby, copying from a neighbour. No words.
+
+   Nothing is drawn per frame. The hosts and links are one SVG as tall as the
+   page, built once (the browser rasterizes it once and scrolls it with the
+   content); a write is a dot gliding along a link on a CSS transform (the
+   compositor moves it); each host breathes on its own slow clock and fades in or
+   out, all CSS opacity the compositor runs. Everything is slow and faint: motion
+   is always there, nothing jumps. Script only wakes every few seconds, to start
+   a write or swap a host. Where a point
+   may sit (clear of the page's words and panels) is answered once, when it is
+   placed, against blocks indexed by row; remeasured only when the layout changes. */
+(function () {
+  const layer = document.getElementById("page-swarm");
+  if (!layer) return;
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const NS = "http://www.w3.org/2000/svg";
+  const KEEP = "h1,h2,h3,p,li,pre,table,a.btn,button,.pill,.frame,.panel,.ui,.hero__window,.footer__col,.nav__logo,.footer__legal,.link,.step-num";
+  const PAD = 36, ROW = 160, SPEED = 40;                 // clearance, block-index row, px/s of a write
+  const LIT = 0.6;                                       // a host's brightness where it is fully clear
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const el = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+
+  let W = 0, H = 0, D = 0, navH = 0, REACH = 180, rows = new Map(), ids = 0, version = 0;   // REACH: the longest link
+  let hosts = [], svg = null, gLinks = null;
+
+  // ---- the page's blocks, indexed by row --------------------------------------------------------
+  function measure() {
+    const Y = scrollY; rows = new Map();
+    for (const e of document.querySelectorAll(KEEP)) {
+      if (e.closest(".nav") && !e.matches(".nav__logo")) continue;
+      const b = e.getBoundingClientRect(); if (!b.width || !b.height) continue;
+      const r = { x0: b.left, x1: b.right, y0: b.top + Y, y1: b.bottom + Y };
+      for (let k = Math.floor((r.y0 - PAD) / ROW); k <= Math.floor((r.y1 + PAD) / ROW); k++) (rows.get(k) || rows.set(k, []).get(k)).push(r);
+    }
+  }
+  // 0 on a block, rising to 1 once PAD clear of every block
+  function room(x, y) {
+    let d = PAD;
+    for (const r of rows.get(Math.floor(y / ROW)) || []) {
+      const dx = Math.max(r.x0 - x, 0, x - r.x1), dy = Math.max(r.y0 - y, 0, y - r.y1);
+      if (dx < d && dy < d) { d = Math.min(d, Math.hypot(dx, dy)); if (!d) return 0; }
+    }
+    return Math.min(1, Math.max(0, (d - 8) / (PAD - 8)));
+  }
+  // a link's clearance: its worst point, sampled every 24px
+  function clearAlong(a, b) {
+    const n = Math.max(2, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 24));
+    let m = 1;
+    for (let i = 1; i < n && m > 0; i++) m = Math.min(m, room(a.x + (b.x - a.x) * i / n, a.y + (b.y - a.y) * i / n));
+    return m;
+  }
+
+  // ---- hosts and links, as SVG ------------------------------------------------------------------
+  function spot(y0, y1) {
+    const gap = Math.max(54, W / 16);
+    for (let i = 0; i < 40; i++) {
+      const x = rand(10, W - 10), y = rand(y0, y1);
+      if (room(x, y) > 0.8 && !hosts.some((h) => Math.abs(h.y - y) < gap && Math.hypot(h.x - x, h.y - y) < gap)) return { x, y };
+    }
+    return null;
+  }
+  // a host: a small glow that breathes on its own slow clock (a CSS opacity animation: the compositor runs it)
+  const bright = (h) => h.dot.style.setProperty("--o", (LIT * h.m * (h.dot.classList.contains("is-new") ? 0.4 : 1)).toFixed(2));
+  function addHost(p, lit) {
+    const h = { id: ids++, x: p.x, y: p.y, m: room(p.x, p.y), ver: lit ? version : -1, near: [], lines: [] };
+    h.dot = document.createElement("i");
+    h.dot.className = lit ? "swarm-host" : "swarm-host is-new";
+    const size = rand(13, 23);
+    h.dot.style.cssText = `width:${size.toFixed(0)}px;height:${size.toFixed(0)}px;transform:translate(${(p.x - size / 2).toFixed(1)}px,${(p.y - size / 2).toFixed(1)}px);--d:${rand(7, 12).toFixed(1)}s;--delay:-${rand(0, 12).toFixed(1)}s`;
+    bright(h); layer.appendChild(h.dot); hosts.push(h);
+    return h;
+  }
+  // up to three nearest neighbours each, never further than REACH (a host only knows hosts near it);
+  // a link is drawn once, its strength its clearance
+  function relink() {
+    hosts.sort((a, b) => a.y - b.y);
+    gLinks.replaceChildren();
+    for (const h of hosts) h.lines = [];
+    const seen = new Set();
+    for (let i = 0; i < hosts.length; i++) {
+      const h = hosts[i], near = [];
+      for (let j = i - 1; j >= 0 && h.y - hosts[j].y < REACH; j--) near.push(hosts[j]);
+      for (let j = i + 1; j < hosts.length && hosts[j].y - h.y < REACH; j++) near.push(hosts[j]);
+      const d = (o) => Math.hypot(o.x - h.x, o.y - h.y);
+      // a neighbour is only a host the link to which stays clear of the page's words and panels:
+      // writes travel these links, so none ever crosses text
+      h.near = []; h.clear = new Map();
+      for (const o of near.filter((o) => d(o) <= REACH).sort((a, b) => d(a) - d(b))) {
+        if (h.near.length === 3) break;
+        const m = clearAlong(h, o); if (m < 0.6) continue;
+        h.near.push(o); h.clear.set(o, m);
+      }
+      for (const o of h.near) {
+        const key = Math.min(h.id, o.id) * 65536 + Math.max(h.id, o.id); if (seen.has(key)) continue; seen.add(key);
+        const m = h.clear.get(o);
+        const line = el("line", { x1: h.x.toFixed(1), y1: h.y.toFixed(1), x2: o.x.toFixed(1), y2: o.y.toFixed(1) });
+        line.style.opacity = (0.08 * m).toFixed(3);
+        gLinks.appendChild(line); h.lines.push(line); o.lines.push(line);
+      }
+    }
+  }
+  function build() {
+    svg = el("svg", { width: W, height: D, viewBox: `0 0 ${W} ${D}` });
+    gLinks = el("g", { class: "swarm-links" });
+    svg.append(gLinks);
+    layer.replaceChildren(svg);
+    hosts = [];
+    const n = Math.max(24, Math.min(160, Math.round((W * D) / 26000)));
+    for (let i = 0; i < n * 3 && hosts.length < n; i++) { const p = spot(navH + 8, D - 8); if (p) addHost(p, true); }
+    relink();
+  }
+
+  // ---- what happens, every few seconds, on screen; all of it slow and faint ------------------------
+  const onScreen = () => hosts.filter((h) => h.dot.isConnected && !h.going && h.y > scrollY + navH && h.y < scrollY + H);
+  // a write: a faint dot drifts from host to neighbour on a CSS transform, and on for two hops
+  function glide(from, to, ver, hops) {
+    const d = document.createElement("i");
+    d.className = "swarm-write";
+    d.style.transform = `translate(${from.x}px, ${from.y}px)`;
+    layer.appendChild(d);
+    const dur = Math.hypot(to.x - from.x, to.y - from.y) / SPEED;
+    d.getBoundingClientRect();                                   // start from here
+    d.style.transition = `transform ${dur.toFixed(2)}s linear`;
+    d.style.transform = `translate(${to.x}px, ${to.y}px)`;
+    setTimeout(() => { d.remove(); arrive(to, ver, hops); }, dur * 1000);
+  }
+  function arrive(h, ver, hops) {
+    if (h.going || h.ver >= ver || !h.dot.isConnected) return;
+    h.ver = ver;
+    if (h.dot.classList.contains("is-new")) { h.dot.classList.remove("is-new"); bright(h); }
+    if (hops > 0) for (const o of h.near) if (!o.going && o.ver < ver && !o.dot.classList.contains("is-new")) glide(h, o, ver, hops - 1);
+  }
+  function write() { const L = onScreen(); if (!L.length) return; version++; arrive(L[(Math.random() * L.length) | 0], version, 2); }
+  // a host goes dark; another lights nearby, dim until it has copied the app from a neighbour
+  function change() {
+    const L = onScreen();
+    if (L.length > 3) {
+      const h = L[(Math.random() * L.length) | 0]; h.going = true;
+      h.dot.classList.add("is-going"); for (const l of h.lines) l.style.opacity = 0;
+      setTimeout(() => { h.dot.remove(); hosts = hosts.filter((o) => o !== h); relink(); }, 4200);
+    }
+    const p = spot(scrollY + navH + 8, scrollY + H - 8); if (!p) return;
+    const h = addHost(p, false); relink();
+    const src = h.near.find((o) => !o.going && !o.dot.classList.contains("is-new"));
+    if (src) setTimeout(() => glide(src, h, version, 0), 1500);
+  }
+  let timers = [];
+  function schedule(fn, a, b) { const tick = () => { if (!document.hidden) fn(); timers.push(setTimeout(tick, rand(a, b) * 1000)); }; timers.push(setTimeout(tick, rand(a, b) * 1000)); }
+
+  // ---- layout ---------------------------------------------------------------------------------------
+  let width = 0, settle;
+  function relayout() {
+    W = document.documentElement.clientWidth; H = innerHeight; D = document.body.offsetHeight;
+    REACH = Math.max(140, Math.min(200, W / 7));
+    layer.style.height = D + "px";
+    navH = document.querySelector(".nav")?.getBoundingClientRect().height || 0;
+    measure();
+    if (Math.abs(W - width) > 40 || !svg) { width = W; build(); return; }
+    svg.setAttribute("height", D); svg.setAttribute("viewBox", `0 0 ${W} ${D}`);
+    for (const h of hosts) { h.m = room(h.x, h.y); bright(h); }
+    relink();
+  }
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => setTimeout(() => {
+    relayout();
+    layer.classList.add("is-on");
+    if (!still) { schedule(write, 6, 9); schedule(change, 15, 25); }
+    new ResizeObserver(() => { clearTimeout(settle); settle = setTimeout(relayout, 250); }).observe(document.body);
+    addEventListener("resize", () => { clearTimeout(settle); settle = setTimeout(relayout, 250); });
+  }, 400));
+})();
+</script>
+<script type="module" src="assets/system.js"></script>
+<script type="module" src="assets/motion/motion.js"></script>
+<script type="module" src="assets/layout/layout.js"></script>
