@@ -92,11 +92,13 @@
   @media (max-width: 639px) { #launch .panel { --p-h: 220px; } }
   /* phone: the sell command wraps onto a second row rather than lose its flags */
   @media (max-width: 639px) { #homelabs .ui-term__cmd { height: auto; flex-wrap: wrap; } #homelabs .ui-term__typed { white-space: normal; overflow: visible; flex: 1 1 0; } }
-  /* the page's ground: one quiet swarm of hosts across the whole page (a fixed canvas, aria-hidden, no
-     text). It multiplies onto whatever ground is beneath and keeps clear of every block of words and every
-     panel (measured in script); under the nav (z 50), above the sections, never taking a click. */
-  .page-swarm { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 40; pointer-events: none; mix-blend-mode: multiply;
+  /* the page's ground: one quiet swarm of hosts behind the whole page (a fixed canvas, aria-hidden, no
+     text). It sits under every section (z -1, above only the page's own background); the one section that
+     paints a ground lets it through at 85%, which over white reads as the same cream. It keeps clear of
+     every block of words and every panel (measured in script). */
+  .page-swarm { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;
     -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 6%, #000 94%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, #000 6%, #000 94%, transparent 100%); }
+  main > .ground-surface { background: color-mix(in srgb, var(--bg) 85%, transparent); }
   @media print { .page-swarm { display: none; } }
   /* small links stay charcoal on hover: ember on white is under 4.5:1 for small text */
   .menu-col a:hover, .footer ul a:hover { color: var(--ink); }
