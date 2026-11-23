@@ -32,7 +32,7 @@ A host does three things for each chain it sells: it hosts the chain on its node
 - Node.js 22 or later.
 - macOS on Apple silicon, or Linux on x86-64.
 
-That's all. Hearth runs the node it sells from: the first time, it downloads a pinned node and sponsor into `~/.hearth/bin` (each checked against a SHA-256 written into Hearth), makes the node in `~/.hearth/node`, and runs it while `hearth sell` sells (its log is `~/.hearth/node/node.log`). Stop the seller and the node stops with it; other `hearth` commands use it while it runs, or start it for as long as they take. To keep selling across restarts, see [Keep it running](#keep-it-running). It listens on port 4001 for peers and serves its operator API on `127.0.0.1:8080`.
+That's all. Hearth runs the node it sells from: the first time, it downloads a pinned node and sponsor into `~/.hearth/bin` (each checked against a SHA-256 written into Hearth), makes the node in `~/.hearth/node`, and runs it while `hearth sell` sells (its log is `~/.hearth/node/node.log`). Stop the seller and the node stops with it; other `hearth` commands use it while it runs, or start it for as long as they take. To keep selling across restarts, see [Run it as a service](#run-it-as-a-service). It listens on port 4001 for peers and serves its operator API on `127.0.0.1:8080`.
 
 Already run a node (5.0.0 or newer)? Give its root with `--root`, or `--node` with `--token-file` for one elsewhere.
 
