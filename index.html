@@ -1,0 +1,617 @@
+<title>Hearth: a backend for web apps that anyone can host</title>
+<script>(function(h){h.lang="en";h.dataset.type="software";h.dataset.radius="sharp";h.dataset.ground="sage";h.dataset.buttons="solid";h.setAttribute("data-motion","");})(document.documentElement)</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Give your web app a database, rules and file storage, run by hosts you hire by the day. Every read is checked in the browser.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Hearth: a backend for web apps that anyone can host">
+<meta property="og:description" content="Hire anyone to host your app's data, rules and files. Run a homelab or a server? Sell hosting with one command and get paid up front.">
+<meta property="og:image" content="share.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#ffffff">
+<!-- <link rel="canonical" href="https://[domain to choose]/"> -->
+<meta name="site-kind" content="software">
+<meta name="page-type" content="software">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400..700&family=JetBrains+Mono:wght@400..500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/system.css">
+<link rel="stylesheet" href="assets/ui/cards.css">
+<link rel="stylesheet" href="assets/motion/motion.css">
+<link rel="stylesheet" href="assets/backgrounds/backgrounds.css">
+<link rel="stylesheet" href="assets/layout/layout.css">
+<link rel="stylesheet" href="assets/icons/icon.css">
+<style>
+:root {
+  --p-bg: #ffffff; --p-surface: #f6efe6; --p-ink: #2b2420; --p-muted: #6e6965;
+  --p-accent: #e8590c; --p-accent-ink: #111111; --p-action: #e8590c; --p-action-ink: #111111;
+  --p-inv-bg: #2b2420; --p-inv-surface: #38312d; --p-inv-ink: #ffffff; --p-inv-muted: #a8a4a2;
+  --p-inv-accent: #e8590c; --p-inv-accent-ink: #111111; --p-inv-action: #e8590c; --p-inv-action-ink: #111111;
+  --font-display: "Host Grotesk", system-ui, sans-serif;
+  --font-text: "Host Grotesk", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --display-weight: 500;
+  --display-tracking: -0.035em;
+  --display-tracking-xl: -0.04em;
+}
+</style>
+<link rel="stylesheet" href="assets/ui/base.css">
+<link rel="stylesheet" href="assets/ui/window/fragment.css">
+<link rel="stylesheet" href="assets/ui/checklist/fragment.css">
+<link rel="stylesheet" href="assets/ui/code/fragment.css">
+<link rel="stylesheet" href="assets/ui/notify/fragment.css">
+<link rel="stylesheet" href="assets/ui/terminal-run/fragment.css">
+<script>document.documentElement.classList.add('m-enter');setTimeout(()=>document.documentElement.classList.add('m-enter-done'),700)</script>
+<script src="assets/backgrounds/backgrounds.js"></script>
+<script>document.documentElement.classList.add('mo-js');setTimeout(()=>document.documentElement.classList.add('mo-safe'),2500)</script>
+<link rel="modulepreload" href="assets/moments/moments.js">
+<link rel="modulepreload" href="assets/moments/lib.js">
+<link rel="modulepreload" href="assets/moments/liquid-type/moment.js">
+<!-- page CSS: inside visuals only -->
+<style>
+  /* the hero's window: the Hearth app, its hosts beside the open order (app-frame recipe) */
+  .app.ui { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); background: var(--u-bg); border: 1px solid var(--u-border); border-radius: var(--u-r); box-shadow: var(--u-shadow); }
+  .app > .app__pane { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+  .app > .app__pane + .app__pane { border-left: 1px solid var(--u-line); }
+  .app > .app__pane > .ui-panel { width: 100%; border: 0; border-radius: 0; box-shadow: none; }
+  .hero--centred .hero__window > .ly-piece { width: min(1040px, calc(100% - 2 * var(--s-6))); }
+  .app > .app__pane::after { content: ""; position: absolute; inset: auto 0 0 0; height: 64px; background: linear-gradient(transparent, var(--u-bg)); pointer-events: none; }
+  @media (max-width: 1279px) {
+    .app.ui { grid-template-columns: minmax(0, 1fr); }
+    .app > .app__pane--list { display: none; }
+    .app > .app__pane + .app__pane { border-left: 0; }
+  }
+  .hero__window .ui-check__label::after { display: none; }
+  .hero__window .ui-check.is-done .ui-check__label { color: var(--u-ink); }
+  .hero--centred .hero__lead { color: var(--ink, var(--p-ink)); }
+  /* the steps' panels */
+  #launch .panel { --p-h: 336px; }
+  @media (min-width: 640px) { #homelabs .frame .ui-term { width: 560px; } }
+  /* the hero window: the hosts list takes the sidebar's room, so each host's checked burn, blocks or domain reads whole */
+  .hero__window .ui-win__body { grid-template-columns: minmax(0, 1fr); }
+  .hero__window .ui-win__side { display: none; }
+  .hero__window :is(.ui-win__cols, .ui-win__row) { grid-template-columns: 24px 104px minmax(0, 1fr) 116px 28px; }
+  .statement-facts { margin-top: var(--s-8); }
+  #questions .q-frame { --ratio: 84%; margin-top: var(--s-5); }
+  @media (min-width: 640px) and (max-width: 1023px) { #launch { --h: 2 } }
+  @media (min-width: 1024px) and (max-width: 1279px) { #launch, #questions { --h: 2 } .statement-facts { margin-top: var(--s-5); } }
+  @media (max-width: 1023px) { #questions .q-frame { --ratio: 22%; } }
+  @media (min-width: 640px) and (max-width: 799px) { #questions .q-frame { --ratio: 9%; } }
+  @media (max-width: 639px) {
+    #launch { --hm: 2; }
+    #homelabs .frame--fill { flex: none; height: 200px; }
+    .statement-facts, .hero--centred .pill { display: none; }
+    #questions { --hm: 2; }
+    #questions .q-frame { --ratio: 90%; }
+  }
+  @media (max-width: 359px) {
+    #homelabs { --hm: 2; }
+    #homelabs .frame--fill { height: 240px; }
+  }
+  @media (max-width: 639px) { #launch .panel { --p-h: 220px; } }
+  /* phone: the sell command wraps onto a second row rather than lose its flags */
+  @media (max-width: 639px) { #homelabs .ui-term__cmd { height: auto; flex-wrap: wrap; } #homelabs .ui-term__typed { white-space: normal; overflow: visible; flex: 1 1 0; } }
+  /* the swarm: every host an ember holding the whole app */
+  #swarm .section-head p { color: var(--p-inv-muted); }
+  .swarm { position: relative; margin-top: var(--s-6); border-radius: 4px; overflow: hidden; background: radial-gradient(120% 90% at 50% 110%, #3d2a1f 0%, #241d1a 55%, #1b1614 100%); }
+  .swarm canvas { display: block; width: 100%; height: clamp(380px, 56vw, 600px); cursor: crosshair; touch-action: manipulation; }
+  .swarm__hud { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; padding: 14px 20px; background: #171311; border-top: 1px solid rgba(255,255,255,.08); color: #f3ebe2; font: 400 0.9rem/1.4 var(--font-mono); }
+  .swarm__hud b { color: #ffb37a; font-weight: 500; }
+  .swarm__hud .is-down b { color: #a8a4a2; }
+  .swarm__spacer { flex: 1 1 auto; }
+  .swarm__btns { display: flex; gap: 8px; }
+  .swarm__btns button { font: 500 0.85rem/1 var(--font-text); color: #f3ebe2; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.22); border-radius: 3px; padding: 9px 12px; cursor: pointer; }
+  .swarm__btns button:hover { background: rgba(255,255,255,.16); }
+  .swarm__btns button:focus-visible { outline: 2px solid #ffb37a; outline-offset: 2px; }
+  .swarm__hint { position: absolute; top: 16px; left: 20px; color: #cfc6bd; font: 400 0.85rem/1.4 var(--font-text); pointer-events: none; transition: opacity .6s; }
+  .swarm-legend { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: var(--s-4); color: var(--p-inv-muted); font-size: 0.9rem; }
+  .swarm-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: -1px; }
+  @media (max-width: 639px) { .swarm__hud { font-size: 0.8rem; padding: 12px 14px; } .swarm__hint { left: 14px; right: 14px; } }
+  /* small links stay charcoal on hover: ember on white is under 4.5:1 for small text */
+  .menu-col a:hover, .footer ul a:hover { color: var(--ink); }
+</style>
+<!-- type: software
+     deal: hero centred (dealt twice: triptych has one button, the page serves two buyers), nav mega, close type,
+     footer columns, rhythm surface-pairs, buttons solid, mark wordmark (replaced by the client's Hearth lockup),
+     ground sage, palette: the client's own colours through start.mjs brand (ember #E8590C accent, charcoal
+     #2B2420 ink, cream #F6EFE6 surface on a white ground; the Hearth logo kit), type host
+     moments: liquid-type in #statement -->
+<header class="nav">
+  <div class="wrap nav__bar">
+    <a class="skip-link" href="#top">Skip to content</a>
+    <a class="nav__logo" href="#top" aria-label="Hearth"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 988 256" aria-hidden="true"><path fill="#2B2420" d="M36 28 H80 V228 H36 Z M176 28 H220 V228 H176 Z M80 84 H176 V112 H80 Z"/><path fill="#E8590C" d="M104 180 C104 164 108 152 112 140 C116 148 118 154 120 158 C120 138 124 122 128 104 C132 122 136 138 136 158 C138 154 140 148 144 140 C148 152 152 164 152 180 A24 24 0 0 1 104 180 Z" transform="translate(128,228) scale(1.0) translate(-128,-204)"/><g transform="translate(312,28)"><path fill="#2B2420" fill-rule="evenodd" d="M0 24 H28 V200 H0 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M0 130 A50 50 0 0 1 100 130 V200 H72 V130 A22 22 0 0 0 28 130 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M240.79 152 A60 60 0 1 0 227.96 178.57 L206.51 160.57 A32 32 0 0 1 152.34 152 Z M152.34 128 A32 32 0 0 1 211.66 128 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M264 140 A60 60 0 1 0 384 140 A60 60 0 1 0 264 140 Z M292 140 A32 32 0 1 0 356 140 A32 32 0 1 0 292 140 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M356 80 H384 V200 H356 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M406 80 H434 V200 H406 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M406 130 A50 50 0 0 1 456 80 H478 V108 H456 A22 22 0 0 0 434 130 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M510 40 H538 V200 H510 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M490 80 H562 V108 H490 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M576 24 H604 V200 H576 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M576 130 A50 50 0 0 1 676 130 V200 H648 V130 A22 22 0 0 0 604 130 Z"/></g></svg></a>
+    <nav class="nav__links" aria-label="Main">
+      <div class="nav__item"><a class="nav__link" href="#launch">How it works</a></div>
+      <div class="nav__item"><a class="nav__link" href="#questions">Questions</a></div>
+      <div class="nav__item"><a class="nav__link" href="https://hearthnet.github.io/docs.html">Docs</a></div>
+    </nav>
+    <div class="nav__actions">
+      <a class="nav__link" href="#homelabs">Sell hosting</a>
+      <a class="btn btn--primary" href="https://hearthnet.github.io/launch.html">Launch an app</a>
+    </div>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 13h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero hero--centred" data-enter aria-labelledby="hero-h">
+    <div class="wrap"><div class="hero-text">
+      <div class="hero__c">
+        <a class="pill" href="https://hearthnet.github.io/launch.html"><span>On testnet</span><span class="muted">Apps go live in under an hour</span></a>
+        <h1 id="hero-h">A backend for your web app, kept online by hosts you hire</h1>
+        <p class="hero__lead">Store your app's data and files without running a server. Pay independent hosts by the day. Visitors write without an account or coin, and their browsers check what the hosts send back.</p>
+        <div class="btn-row"><a class="btn btn--primary" href="https://hearthnet.github.io/launch.html">Launch an app</a><a class="btn btn--secondary" href="#homelabs">Sell hosting</a></div>
+      </div>
+      <div class="hero__window" role="img" aria-label="Hearth showing the hosts serving an app, with each host's price, domain or stake, and the steps of hiring one more">
+        <div class="ly-piece" aria-hidden="true">
+          <div class="ui app">
+            <div class="app__pane app__pane--list">
+              <div class="ui ui-panel ui-win" data-ui="window" data-open="Serving" data-work="Syncing" data-done="Serving">
+                <div class="ui-win__bar">
+                  <span class="ui-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                  <span class="ui-win__crumb">recipes <i>/</i> <b>Hosts</b></span>
+                  <span class="ui-spacer"></span>
+                </div>
+                <div class="ui-win__body">
+                  <nav class="ui-win__side" aria-hidden="true">
+                    <span class="ui-win__nav is-on"><svg class="ui-icon" viewBox="0 0 16 16"><path d="M2.5 4h11v3h-11zM2.5 9h11v3h-11z"/></svg>Hosts<em>3</em></span>
+                    <span class="ui-win__nav"><svg class="ui-icon" viewBox="0 0 16 16"><path d="M4 2.5h8v11H4zM6 6h4M6 9h4"/></svg>Orders<em>5</em></span>
+                    <span class="ui-win__nav"><svg class="ui-icon" viewBox="0 0 16 16"><path d="M3 4.5h10v8H3zM3 7h10"/></svg>Storage</span>
+                    <span class="ui-win__nav"><svg class="ui-icon" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>Offers</span>
+                  </nav>
+                  <div class="ui-win__main">
+                    <div class="ui-win__cols" aria-hidden="true"><span>Host</span><span>Terms</span><span>Status</span><span>Left</span></div>
+                    <ul class="ui-win__rows">
+                      <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="1">IA</span><span class="ui-win__who">apps-iad</span><span class="ui-win__sub">Domain verified · 12,000 a day</span><span class="ui-win__st is-done" data-st>Serving</span><span class="ui-win__age">29d</span></li>
+                      <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="3">BR</span><span class="ui-win__who">basement-rack</span><span class="ui-win__sub">Domain verified · 8,000 a day</span><span class="ui-win__st is-done" data-st>Serving</span><span class="ui-win__age">12d</span></li>
+                      <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="4">7F</span><span class="ui-win__who">7f3a…c21e</span><span class="ui-win__sub">No domain · 5,000 at stake</span><span class="ui-win__st" data-st>Syncing</span><span class="ui-win__age">30d</span></li>
+                      <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="2">GS</span><span class="ui-win__who">gpu-shed</span><span class="ui-win__sub">Stopped serving a day ago</span><span class="ui-win__st is-you" data-st>Not renewed</span><span class="ui-win__age">-</span></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="app__pane app__pane--open" data-ui-loop>
+              <div class="ui ui-panel ui-checks" data-ui="checklist">
+                <div class="ui-checks__head">
+                  <div class="ui-title">Hiring 7f3a…c21e</div>
+                  <span class="ui-spacer"></span>
+                  <div class="ui-meta" data-checks-count>3 of 4</div>
+                </div>
+                <div class="ui-checks__bar"><i data-checks-bar style="--k:0.75"></i></div>
+                <ul class="ui-checks__list">
+                  <li class="ui-check is-done"><span class="ui-check__box"><svg viewBox="0 0 16 16"><path d="m4.5 8.2 2.3 2.3 4.7-5"/></svg></span><span class="ui-check__label">Paid up front for 30 days</span></li>
+                  <li class="ui-check is-done"><span class="ui-check__box"><svg viewBox="0 0 16 16"><path d="m4.5 8.2 2.3 2.3 4.7-5"/></svg></span><span class="ui-check__label">Checked its 5,000 coin at stake</span></li>
+                  <li class="ui-check is-done"><span class="ui-check__box"><svg viewBox="0 0 16 16"><path d="m4.5 8.2 2.3 2.3 4.7-5"/></svg></span><span class="ui-check__label">Copied your data from two hosts</span></li>
+                  <li class="ui-check"><span class="ui-check__box"><svg viewBox="0 0 16 16"><path d="m4.5 8.2 2.3 2.3 4.7-5"/></svg></span><span class="ui-check__label">Serving your app</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </section>
+
+  <section class="section" id="launch" aria-labelledby="launch-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="launch-h">Launch an app in 3 steps</h2>
+        <p>Your page stays static. Hearth gives it a backend, and the hosts you hire keep it online.</p>
+      </div>
+      <div class="grid">
+        <article class="card card--row card--open span-4">
+          <span class="step-num">1</span>
+          <h3>Choose who can write</h3>
+          <p>Pick one rule for your app's data. Every host enforces it, and it can't change after launch.</p>
+          <div class="panel">
+            <div class="stage stage--fade-b"><div class="at-rise to-edge" style="--w: 380px; --ax: max(24px, 50% - 190px); --ay: 40px">
+              <div class="ui ui-panel ui-code" data-ui="code">
+                <div class="ui-code__tabs"><span class="ui-code__tab is-on">Rules</span><span class="ui-spacer"></span></div>
+                <pre class="ui-code__pre"><code><span class="ui-code__ln" data-n="1"><span class="c">// who may write which keys</span></span>
+<span class="ui-code__ln" data-n="2">anyone      <span class="c">any key</span></span>
+<span class="ui-code__ln is-mark" data-n="3"><span class="f">own keys</span>    <span class="c">only under your address</span></span>
+<span class="ui-code__ln" data-n="4">write once  <span class="c">each key set one time</span></span></code></pre>
+              </div>
+            </div></div>
+          </div>
+        </article>
+        <article class="card card--row card--open span-4">
+          <span class="step-num">2</span>
+          <h3>Hire hosts</h3>
+          <p>Pay one or more hosts up front for the days you want. If one stops, the others keep serving, and you renew only the hosts that stayed up.</p>
+          <div class="panel">
+            <div class="stage stage--fade-b"><div class="at-rise fit" style="--fit-max: 340px; --ax: max(24px, 50% - 170px); --ay: 40px">
+              <div class="ui ui-notify" data-ui="notify">
+                <ul class="ui-notify__list" data-notify-list>
+                  <li class="ui-note"><span class="ui-note__ico"><svg class="ui-icon" viewBox="0 0 16 16"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg></span><span class="ui-note__text"><span class="ui-note__title">basement-rack is serving<time>now</time></span><span class="ui-note__body">Paid through 14 December</span></span></li>
+                  <li class="ui-note"><span class="ui-note__ico"><svg class="ui-icon" viewBox="0 0 16 16"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg></span><span class="ui-note__text"><span class="ui-note__title">apps-iad renewed<time>2h</time></span><span class="ui-note__body">Paid for 30 more days</span></span></li>
+                  <li class="ui-note"><span class="ui-avatar ui-note__av" data-tone="2">GS</span><span class="ui-note__text"><span class="ui-note__title">gpu-shed not renewed<time>1d</time></span><span class="ui-note__body">Stopped serving a day ago</span></span></li>
+                </ul>
+              </div>
+            </div></div>
+          </div>
+        </article>
+        <article class="card card--row card--open span-4">
+          <span class="step-num">3</span>
+          <h3>Read and write from your page</h3>
+          <p>Host the page anywhere static, like GitHub Pages. Visitors' browsers save and load the data directly.</p>
+          <div class="panel">
+            <div class="stage stage--fade-b"><div class="at-rise to-edge" style="--w: 380px; --ax: max(24px, 50% - 190px); --ay: 40px">
+              <div class="ui ui-panel ui-code" data-ui="code">
+                <div class="ui-code__tabs"><span class="ui-code__tab is-on"><i class="ui-code__lang">JS</i>app.js</span><span class="ui-spacer"></span></div>
+                <pre class="ui-code__pre"><code><span class="ui-code__ln" data-n="1"><span class="k">const</span> db = <span class="k">await</span> <span class="f">connect</span>({</span>
+<span class="ui-code__ln" data-n="2">  chain: <span class="s">"Nexus/testnet/recipes"</span>,</span>
+<span class="ui-code__ln" data-n="3">  node, sponsors,</span>
+<span class="ui-code__ln" data-n="4">});</span>
+<span class="ui-code__ln is-mark" data-n="5"><span class="k">await</span> db.<span class="f">set</span>(<span class="s">"r/soup"</span>, recipe);</span>
+<span class="ui-code__ln" data-n="6"><span class="k">const</span> soup = <span class="k">await</span> db.<span class="f">get</span>(<span class="s">"r/soup"</span>);</span></code></pre>
+              </div>
+            </div></div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section ground-inverse" id="swarm" aria-labelledby="swarm-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="swarm-h">No single fire to put out</h2>
+        <p>Every host you hire keeps a whole copy of your app. A new write spreads from host to host, and each visitor checks what they read against two of them. Put out any ember you like.</p>
+      </div>
+      <div class="swarm">
+        <canvas id="swarm-canvas" role="img" aria-label="A swarm of glowing hosts, each holding a copy of an app. Writes spread between them, visitors read from two at a time, and hosts can be put out while the rest keep serving."></canvas>
+        <p class="swarm__hint" id="swarm-hint">Tap an ember to put a host out. Tap empty space to hire one.</p>
+        <div class="swarm__hud">
+          <span id="swarm-hosts"><b>0</b> hosts serving</span>
+          <span id="swarm-app">app <b>online</b></span>
+          <span id="swarm-copy">latest write on <b>0 of 0</b></span>
+          <span class="swarm__spacer"></span>
+          <span class="swarm__btns"><button type="button" id="swarm-half">Put out half</button><button type="button" id="swarm-reset">Start over</button></span>
+        </div>
+        <p class="sr-only" id="swarm-status" aria-live="polite"></p>
+      </div>
+      <div class="swarm-legend" aria-hidden="true">
+        <span><i style="background:#ff8a3d"></i>A host serving your app</span>
+        <span><i style="background:#fff1d6"></i>A write spreading</span>
+        <span><i style="background:transparent;border:1.5px solid #f3ebe2;border-radius:2px"></i>A visitor checking two hosts</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section statement" id="statement" aria-labelledby="statement-h">
+    <div class="wrap">
+      <div data-moment="liquid-type" class="section-head" style="max-width:none">
+        <h2 id="statement-h" class="mo-lt__type">A host can go offline. Your page checks what it serves.</h2>
+        <p>Your app's data lives with every host you hire, not one. Each visitor's browser checks what it reads, and every host enforces your rules.</p>
+      </div>
+      <div class="grid statement-facts">
+        <div class="span-4 stack-2"><h3>Reads are checked</h3><p>Every value is checked against your app's chain. Read from two or more hosts and a value shows only when two agree; one host alone could still serve old data.</p></div>
+        <div class="span-4 stack-2"><h3>Rules hold everywhere</h3><p>A write your rules refuse is refused by every host, so no single host can let it through.</p></div>
+        <div class="span-4 stack-2"><h3>Hosts are judged on the record</h3><p>See each host's serving record, stake and domain before you pay, read from the chain rather than from the host.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section ground-surface" id="homelabs" aria-labelledby="homelabs-h">
+    <div class="wrap">
+      <div class="grid grid--top fill">
+        <div class="span-5 stack-5">
+          <h2 id="homelabs-h">Earn by hosting apps</h2>
+          <p class="t-lead">Run <code>hearth sell</code> next to your Lattice node (4.0.1 or newer). Set your own daily price, and it serves each app that pays for it.</p>
+          <ul class="facts-list stack-3">
+            <li>Apps pay up front, before you serve anything</li>
+            <li>Spend what you earn on hosting and storage, or sell it with <code>hearth sell-coin</code></li>
+            <li>Your machine makes each app's blocks, so no miners are needed</li>
+            <li>No domain? You're listed under your key</li>
+            <li>New? Put coin at stake with <code>hearth burn</code> so buyers can see you're serious</li>
+          </ul>
+          <a class="link" href="https://hearthnet.github.io/sell.html">Read the seller guide</a>
+        </div>
+        <div class="frame frame--split frame--fill frame--lit span-6 start-7">
+          <div class="stage stage--fade-br"><div class="at-rise to-edge" style="--w: 560px; --ay: 56px" data-ui-loop>
+            <div class="ui ui-panel ui-term" data-ui="terminal-run">
+              <div class="ui-term__head">
+                <span class="ui-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="ui-term__title">homelab/node</span>
+                <span class="ui-meta">sh</span>
+                <span class="ui-spacer"></span>
+              </div>
+              <div class="ui-term__screen" data-term-screen>
+                <div class="ui-term__track" data-term-track>
+                  <div class="ui-term__ln ui-term__cmd"><span class="ui-term__cwd">~/lab</span><span class="ui-term__sig">$</span><span class="ui-term__typed" data-term-cmd>hearth sell</span></div>
+                  <div class="ui-term__ln ui-term__meter" data-term-out data-term-meter><span class="ui-term__bar" style="--p:1"><i></i></span><span class="ui-term__count" data-term-count>4 of 4 steps</span></div>
+                  <div class="ui-term__ln ui-term__log" data-term-out data-term-step><svg class="ui-term__tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg><span class="ui-term__path">waiting for coin</span><span class="ui-term__n">market</span><span class="ui-term__t">in</span></div>
+                  <div class="ui-term__ln ui-term__log" data-term-out data-term-step><svg class="ui-term__tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg><span class="ui-term__path">offer written</span><span class="ui-term__n">your price</span><span class="ui-term__t">ok</span></div>
+                  <div class="ui-term__ln ui-term__log" data-term-out data-term-step><svg class="ui-term__tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg><span class="ui-term__path">order paid</span><span class="ui-term__n">30 days</span><span class="ui-term__t">ok</span></div>
+                  <div class="ui-term__ln ui-term__log" data-term-out data-term-step><svg class="ui-term__tick" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg><span class="ui-term__path">chain created</span><span class="ui-term__n">recipes</span><span class="ui-term__t">hosted</span></div>
+                  <div class="ui-term__ln ui-term__gap" data-term-out aria-hidden="true"></div>
+                  <div class="ui-term__ln ui-term__sum" data-term-out><span class="ui-term__key">Seller</span><span class="ui-term__val">0x7f3a…c21e</span><span class="ui-term__dim">(key only)</span></div>
+                  <div class="ui-term__ln ui-term__sum" data-term-out><span class="ui-term__key">Earned</span><span class="ui-term__val">paid up front</span><span class="ui-term__dim">(30 days)</span></div>
+                  <div class="ui-term__ln ui-term__done" data-term-out data-term-done><span class="ui-term__ok"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 8.3 2.4 2.4 4.6-5"/></svg></span><b>Serving</b><span class="ui-term__dim">next pass in 30s</span></div>
+                  <div class="ui-term__ln ui-term__cmd" data-term-next><span class="ui-term__cwd">~/lab</span><span class="ui-term__sig">$</span><span class="ui-term__typed"></span><i class="ui-term__caret" aria-hidden="true"></i></div>
+                </div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="questions" aria-labelledby="questions-h">
+    <div class="wrap">
+      <div class="grid grid--top">
+        <div class="span-5 stack-4">
+          <h2 id="questions-h">Questions</h2>
+          <p class="muted">What Hearth does today, and what it doesn't do yet.</p>
+          <div class="frame frame--lit q-frame">
+            <div class="stage stage--fade-b"><div class="at-rise to-edge" style="--w: 440px; --ax: max(24px, 50% - 220px); --ay: 40px">
+              <div class="ui ui-panel ui-code" data-ui="code">
+                <div class="ui-code__tabs"><span class="ui-code__tab is-on"><i class="ui-code__lang">JS</i>list.js</span><span class="ui-spacer"></span></div>
+                <pre class="ui-code__pre"><code><span class="ui-code__ln" data-n="1"><span class="c">// every recipe, by key prefix</span></span>
+<span class="ui-code__ln" data-n="2"><span class="k">for</span> (<span class="k">const</span> entry</span>
+<span class="ui-code__ln is-mark" data-n="3">    <span class="k">of await</span> db.<span class="f">list</span>(<span class="s">"r/"</span>))</span>
+<span class="ui-code__ln" data-n="4">  <span class="f">show</span>(entry);</span>
+<span class="ui-code__ln" data-n="5"></span>
+<span class="ui-code__ln" data-n="6"><span class="c">// your own index, under keys</span></span>
+<span class="ui-code__ln" data-n="7"><span class="c">// your rules allow</span></span>
+<span class="ui-code__ln" data-n="8"><span class="k">const</span> soups =</span>
+<span class="ui-code__ln" data-n="9">  <span class="k">await</span> db.<span class="f">get</span>(<span class="s">"idx/soup"</span>);</span></code></pre>
+              </div>
+            </div></div>
+          </div>
+        </div>
+        <div class="faq span-6 start-7">
+          <div class="faq__item"><h3>What does it cost?</h3><p>Each host sets its own daily price in Hearth coin. You pay up front for the days you choose, and renew only the hosts that kept serving. Visitors pay nothing.</p></div>
+          <div class="faq__item"><h3>How do I get Hearth coin?</h3><p>Buy it on Lattice's own exchange, from the Buy coin page. Hosts sell what they earn there, and Lattice checks both sides of every trade.</p></div>
+          <div class="faq__item"><h3>What happens if a host stops?</h3><p>The other hosts you hired keep serving. You stop paying that host when its days run out.</p></div>
+          <div class="faq__item"><h3>Can my app run SQL or server code?</h3><p>No. Data is keys and values, read by key or prefix. There are no server functions.</p></div>
+          <div class="faq__item"><h3>Is my app's data private?</h3><p>No. Anyone can read an app's data. Encrypt what should stay private before you write it.</p></div>
+          <div class="faq__item"><h3>Can I change my app's rules later?</h3><p>No. They are fixed at launch, so test them on testnet first.</p></div>
+          <div class="faq__item"><h3>Why do hosts put coin at stake?</h3><p>To show they're serious. A host burns coin it can never get back, and you see how much before you pay. It says nothing about how well a host serves; its record does.</p></div>
+          <div class="faq__item"><h3>Is Hearth live on mainnet?</h3><p>Not yet. It runs on the Lattice testnet, and hosts are paid in the market's own coin.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer closing" id="contact" aria-labelledby="close-h">
+  <div class="wrap">
+    <div class="closing__cta close--type">
+      <div class="section-head">
+        <h2 id="close-h">A home for your app</h2>
+        <p>Pick your rules, hire hosts, and add two lines to your page. The launch guide walks you through it in under an hour.</p>
+      </div>
+      <a class="btn btn--primary btn--xl btn--wide" href="https://hearthnet.github.io/launch.html">Launch an app<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
+    </div>
+    <div class="closing__links">
+      <div class="grid">
+        <div class="span-4 stack-4">
+          <a class="nav__logo" href="#top" aria-label="Hearth"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 988 256" aria-hidden="true"><path fill="#2B2420" d="M36 28 H80 V228 H36 Z M176 28 H220 V228 H176 Z M80 84 H176 V112 H80 Z"/><path fill="#E8590C" d="M104 180 C104 164 108 152 112 140 C116 148 118 154 120 158 C120 138 124 122 128 104 C132 122 136 138 136 158 C138 154 140 148 144 140 C148 152 152 164 152 180 A24 24 0 0 1 104 180 Z" transform="translate(128,228) scale(1.0) translate(-128,-204)"/><g transform="translate(312,28)"><path fill="#2B2420" fill-rule="evenodd" d="M0 24 H28 V200 H0 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M0 130 A50 50 0 0 1 100 130 V200 H72 V130 A22 22 0 0 0 28 130 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M240.79 152 A60 60 0 1 0 227.96 178.57 L206.51 160.57 A32 32 0 0 1 152.34 152 Z M152.34 128 A32 32 0 0 1 211.66 128 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M264 140 A60 60 0 1 0 384 140 A60 60 0 1 0 264 140 Z M292 140 A32 32 0 1 0 356 140 A32 32 0 1 0 292 140 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M356 80 H384 V200 H356 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M406 80 H434 V200 H406 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M406 130 A50 50 0 0 1 456 80 H478 V108 H456 A22 22 0 0 0 434 130 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M510 40 H538 V200 H510 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M490 80 H562 V108 H490 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M576 24 H604 V200 H576 Z"/><path fill="#2B2420" fill-rule="evenodd" d="M576 130 A50 50 0 0 1 676 130 V200 H648 V130 A22 22 0 0 0 604 130 Z"/></g></svg></a>
+          <p class="footer__lede">Backends anyone can host.</p>
+        </div>
+        <div class="span-2 footer__col"><h3>Build</h3><ul><li><a href="#launch">How it works</a></li><li><a href="https://hearthnet.github.io/launch.html">Launch guide</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Host</h3><ul><li><a href="#homelabs">Sell hosting</a></li><li><a href="https://hearthnet.github.io/sell.html">Seller guide</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Questions</h3><ul><li><a href="#questions">Questions</a></li><li><a href="https://lattice.build/docs/">Lattice docs</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Source</h3><ul><li><a href="https://github.com/hearthnet/hearth">GitHub</a></li><li><a href="https://lattice.build/explorer/">Explorer</a></li></ul></div>
+      </div>
+      <div class="footer__legal">
+        <span>&copy; 2026 Hearth. Open source, on Lattice.</span>
+        <div class="socials"></div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* The swarm: hosts as embers, each holding a whole copy of the app. Writes
+   spread host to host along nearest neighbours; visitors read from the two
+   nearest hosts. Put a host out and the rest keep serving; the market hires a
+   replacement, which copies the app from a neighbour. */
+(function () {
+  const canvas = document.getElementById("swarm-canvas");
+  if (!canvas || !canvas.getContext) return;
+  const ctx = canvas.getContext("2d");
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const $ = (id) => document.getElementById(id);
+  const hud = { hosts: $("swarm-hosts"), app: $("swarm-app"), copy: $("swarm-copy"), status: $("swarm-status"), hint: $("swarm-hint") };
+  let W = 0, H = 0, dpr = 1, hosts = [], packets = [], beams = [], smoke = [], visitors = [];
+  let N = 0, shown = "", version = 0, nextWrite = 1.2, nextRead = 0.8, nextHire = 6, t = 0, running = false, last = 0, touched = false;
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const live = () => hosts.filter((h) => h.alive);
+
+  function size() {
+    const r = canvas.getBoundingClientRect();
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = r.width; H = r.height;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function spot() {
+    const top = 56, bottom = H - 86;
+    for (let i = 0; i < 60; i++) {
+      const p = { x: rand(28, W - 28), y: rand(top, bottom) };
+      if (hosts.every((h) => !h.alive || dist(h, p) > Math.max(46, Math.min(W, H) / 9))) return p;
+    }
+    return { x: rand(28, W - 28), y: rand(top, bottom) };
+  }
+  function host(p, kindled) {
+    return { x: p.x, y: p.y, hx: p.x, hy: p.y, ph: rand(0, 6.28), r: rand(3.2, 5.2), alive: true, ver: kindled ? -1 : version, glow: kindled ? 0.35 : 1, links: [] };
+  }
+  function relink() {
+    const L = live();
+    for (const h of L) h.links = L.filter((o) => o !== h).sort((a, b) => dist(h, a) - dist(h, b)).slice(0, 3);
+  }
+  function start() {
+    size();
+    shown = ""; hosts = []; packets = []; beams = []; smoke = []; version = 0;
+    N = Math.max(16, Math.min(40, Math.round((W * H) / 11000)));
+    for (let i = 0; i < N; i++) hosts.push(host(spot(), false));
+    const vy = H - 34;
+    visitors = [0.18, 0.5, 0.82].map((f) => ({ x: W * f, y: vy, ok: 0 }));
+    relink(); report(); draw();
+  }
+  function send(from, ver) {
+    for (const to of from.links) if (to.alive && to.ver < ver) packets.push({ from, to, ver, k: 0, dur: still ? 0 : Math.max(0.25, dist(from, to) / 260) });
+  }
+  function arrive(p) {
+    if (!p.to.alive || p.to.ver >= p.ver) return;
+    p.to.ver = p.ver; p.to.glow = 1; send(p.to, p.ver);
+  }
+  function write() {
+    const L = live(); if (!L.length) return;
+    const h = L[(Math.random() * L.length) | 0];
+    version++; h.ver = version; h.glow = 1.6; send(h, version);
+  }
+  function read() {
+    const L = live(); if (L.length < 1) return;
+    const v = visitors[(Math.random() * visitors.length) | 0];
+    const two = L.slice().sort((a, b) => dist(v, a) - dist(v, b)).slice(0, 2);
+    const agree = two.length === 2 && two[0].ver === two[1].ver;
+    for (const h of two) beams.push({ v, h, life: 1 });
+    v.ok = agree ? 1 : -1;
+  }
+  function out(h) {
+    h.alive = false;
+    for (let i = 0; i < 7; i++) smoke.push({ x: h.x + rand(-3, 3), y: h.y, vy: rand(-26, -14), vx: rand(-6, 6), life: 1 });
+    relink();
+  }
+  function hire(p) {
+    const L = live();
+    if (!L.length) return false; // nothing left to copy the app from
+    if (L.length >= N * 2) return false;
+    hosts = hosts.filter((o) => o.alive);
+    const h = host(p, true); hosts.push(h); relink();
+    const src = L.sort((a, b) => dist(h, a) - dist(h, b))[0];
+    packets.push({ from: src, to: h, ver: version, k: 0, dur: still ? 0 : 0.9 });
+    return true;
+  }
+  function report() {
+    const L = live(), on = L.length > 0, have = L.filter((h) => h.ver === version).length;
+    const key = `${L.length}/${have}/${version > 0}`; if (key === shown) return; shown = key;
+    hud.hosts.innerHTML = `<b>${L.length}</b> host${L.length === 1 ? "" : "s"} serving`;
+    hud.app.className = on ? "" : "is-down";
+    hud.app.innerHTML = on ? "app <b>online</b>" : "app <b>offline</b>: no copy left";
+    hud.copy.innerHTML = on ? `latest write on <b>${have} of ${L.length}</b>` : "";
+  }
+  function say(text) { hud.status.textContent = text; }
+  function firstTouch() { if (!touched) { touched = true; hud.hint.style.opacity = "0"; } }
+
+  canvas.addEventListener("click", (e) => {
+    const r = canvas.getBoundingClientRect(), p = { x: e.clientX - r.left, y: e.clientY - r.top };
+    firstTouch();
+    const near = live().sort((a, b) => dist(p, a) - dist(p, b))[0];
+    if (near && dist(near, p) < 30) { out(near); say(`A host went out. ${live().length} still serving.`); }
+    else if (hire(p)) say(`Hired a host. It copies the app from its nearest neighbour.`);
+    else say("No host is left with a copy to learn from.");
+    report(); if (still) draw();
+  });
+  $("swarm-half").addEventListener("click", () => {
+    firstTouch();
+    const L = live().sort(() => Math.random() - 0.5);
+    L.slice(0, Math.ceil(L.length / 2)).forEach(out);
+    say(`Half the hosts went out. ${live().length} still serving, each with the whole app.`);
+    report(); if (still) draw();
+  });
+  $("swarm-reset").addEventListener("click", () => { start(); say("Started over."); });
+
+  function step(dt) {
+    t += dt;
+    for (const h of hosts) {
+      if (!h.alive) continue;
+      h.x = h.hx + Math.sin(t * 0.6 + h.ph) * 5; h.y = h.hy + Math.cos(t * 0.45 + h.ph * 1.3) * 4;
+      h.glow = Math.min(1.6, h.glow + dt * 1.2); if (h.glow > 1) h.glow = Math.max(1, h.glow - dt * 1.5);
+    }
+    for (const p of packets) p.k += dt / (p.dur || 1e-3);
+    packets.filter((p) => p.k >= 1).forEach(arrive);
+    packets = packets.filter((p) => p.k < 1);
+    for (const b of beams) b.life -= dt * 0.9;
+    beams = beams.filter((b) => b.life > 0);
+    for (const v of visitors) v.ok *= Math.pow(0.4, dt);
+    for (const s of smoke) { s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt * 0.5; }
+    smoke = smoke.filter((s) => s.life > 0);
+    if ((nextWrite -= dt) <= 0) { write(); nextWrite = rand(1.8, 3.2); }
+    if ((nextRead -= dt) <= 0) { read(); nextRead = rand(1.1, 1.9); }
+    if ((nextHire -= dt) <= 0) { if (live().length < N * 0.55 && live().length) hire(spot()); nextHire = rand(5, 8); }
+    report();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    const L = live();
+    // links: who copies from whom
+    ctx.lineWidth = 1;
+    for (const h of L) for (const o of h.links) {
+      ctx.strokeStyle = "rgba(255,170,110,0.10)";
+      ctx.beginPath(); ctx.moveTo(h.x, h.y); ctx.lineTo(o.x, o.y); ctx.stroke();
+    }
+    // reads: a visitor checks two hosts
+    for (const b of beams) {
+      ctx.strokeStyle = `rgba(243,235,226,${0.55 * b.life})`; ctx.setLineDash([3, 4]);
+      ctx.beginPath(); ctx.moveTo(b.v.x, b.v.y); ctx.lineTo(b.h.x, b.h.y); ctx.stroke(); ctx.setLineDash([]);
+    }
+    // writes in flight
+    for (const p of packets) {
+      const x = p.from.x + (p.to.x - p.from.x) * p.k, y = p.from.y + (p.to.y - p.from.y) * p.k;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, 7);
+      g.addColorStop(0, "rgba(255,241,214,1)"); g.addColorStop(1, "rgba(255,241,214,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 7, 0, 6.29); ctx.fill();
+    }
+    // hosts out: cold coals
+    for (const h of hosts) if (!h.alive) { ctx.fillStyle = "rgba(168,164,162,0.35)"; ctx.beginPath(); ctx.arc(h.x, h.y, 2.4, 0, 6.29); ctx.fill(); }
+    // hosts serving: embers, dimmer while behind the latest write
+    for (const h of L) {
+      const fresh = h.ver === version ? 1 : 0.55;
+      const fl = still ? 1 : 0.85 + 0.15 * Math.sin(t * 7 + h.ph * 3) * Math.sin(t * 3.1 + h.ph);
+      const R = h.r * 5.5 * Math.min(1, h.glow) * fl;
+      const g = ctx.createRadialGradient(h.x, h.y, 0, h.x, h.y, R);
+      g.addColorStop(0, `rgba(255,214,160,${0.95 * fresh})`);
+      g.addColorStop(0.25, `rgba(255,138,61,${0.75 * fresh})`);
+      g.addColorStop(1, "rgba(232,89,12,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(h.x, h.y, R, 0, 6.29); ctx.fill();
+      ctx.fillStyle = `rgba(255,236,210,${fresh})`; ctx.beginPath(); ctx.arc(h.x, h.y, h.r * 0.55 * Math.min(1, h.glow), 0, 6.29); ctx.fill();
+    }
+    // smoke from hosts put out
+    for (const s of smoke) { ctx.fillStyle = `rgba(200,192,184,${0.25 * s.life})`; ctx.beginPath(); ctx.arc(s.x, s.y, 3 + (1 - s.life) * 7, 0, 6.29); ctx.fill(); }
+    // visitors: browsers at the edge of the swarm
+    ctx.font = "500 11px " + getComputedStyle(document.body).fontFamily;
+    ctx.textAlign = "center";
+    for (const v of visitors) {
+      ctx.strokeStyle = "rgba(243,235,226,0.85)"; ctx.lineWidth = 1.5;
+      ctx.strokeRect(v.x - 9, v.y - 7, 18, 14);
+      ctx.beginPath(); ctx.moveTo(v.x - 9, v.y - 3); ctx.lineTo(v.x + 9, v.y - 3); ctx.stroke();
+      ctx.fillStyle = "rgba(207,198,189,0.9)"; ctx.fillText("visitor", v.x, v.y + 22);
+      if (Math.abs(v.ok) > 0.05) {
+        ctx.fillStyle = v.ok > 0 ? `rgba(255,214,160,${v.ok})` : `rgba(207,198,189,${-v.ok})`;
+        ctx.fillText(v.ok > 0 ? "two agree" : "waits for two", v.x, v.y - 14);
+      }
+    }
+  }
+
+  function loop(now) {
+    if (!running) return;
+    const dt = Math.min(0.05, (now - last) / 1000 || 0); last = now;
+    step(dt); draw(); requestAnimationFrame(loop);
+  }
+  function play(on) {
+    if (still) return;
+    if (on && !running) { running = true; last = performance.now(); requestAnimationFrame(loop); }
+    if (!on) running = false;
+  }
+  start();
+  if (still) { write(); draw(); }
+  new IntersectionObserver((es) => play(es[0].isIntersecting && !document.hidden)).observe(canvas);
+  document.addEventListener("visibilitychange", () => play(!document.hidden && canvas.getBoundingClientRect().top < innerHeight));
+  let rs; addEventListener("resize", () => { clearTimeout(rs); rs = setTimeout(() => { const w = W; size(); if (Math.abs(W - w) > 40) start(); else draw(); }, 200); });
+})();
+</script>
+<script type="module" src="assets/system.js"></script>
+<script type="module" src="assets/motion/motion.js"></script>
+<script type="module" src="assets/layout/layout.js"></script>
