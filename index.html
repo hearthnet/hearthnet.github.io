@@ -409,12 +409,12 @@
   const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const NS = "http://www.w3.org/2000/svg";
   const KEEP = "h1,h2,h3,p,li,pre,table,a.btn,button,.pill,.frame,.panel,.ui,.hero__window,.footer__col,.nav__logo,.footer__legal,.link,.step-num";
-  const PAD = 36, ROW = 160, REACH = 420, SPEED = 40;    // clearance, block-index row, link reach, px/s of a write
+  const PAD = 36, ROW = 160, SPEED = 40;                 // clearance, block-index row, px/s of a write
   const LIT = 0.6;                                       // a host's brightness where it is fully clear
   const rand = (a, b) => a + Math.random() * (b - a);
   const el = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
 
-  let W = 0, H = 0, D = 0, navH = 0, rows = new Map(), ids = 0, version = 0;
+  let W = 0, H = 0, D = 0, navH = 0, REACH = 180, rows = new Map(), ids = 0, version = 0;   // REACH: the longest link
   let hosts = [], svg = null, gLinks = null;
 
   // ---- the page's blocks, indexed by row --------------------------------------------------------
@@ -464,7 +464,8 @@
     bright(h); layer.appendChild(h.dot); hosts.push(h);
     return h;
   }
-  // three nearest neighbours each; a link is drawn once, its strength its clearance
+  // up to three nearest neighbours each, never further than REACH (a host only knows hosts near it);
+  // a link is drawn once, its strength its clearance
   function relink() {
     hosts.sort((a, b) => a.y - b.y);
     gLinks.replaceChildren();
@@ -474,8 +475,8 @@
       const h = hosts[i], near = [];
       for (let j = i - 1; j >= 0 && h.y - hosts[j].y < REACH; j--) near.push(hosts[j]);
       for (let j = i + 1; j < hosts.length && hosts[j].y - h.y < REACH; j++) near.push(hosts[j]);
-      near.sort((a, b) => Math.hypot(a.x - h.x, a.y - h.y) - Math.hypot(b.x - h.x, b.y - h.y));
-      h.near = near.slice(0, 3);
+      const d = (o) => Math.hypot(o.x - h.x, o.y - h.y);
+      h.near = near.filter((o) => d(o) <= REACH).sort((a, b) => d(a) - d(b)).slice(0, 3);
       for (const o of h.near) {
         const key = Math.min(h.id, o.id) * 65536 + Math.max(h.id, o.id); if (seen.has(key)) continue; seen.add(key);
         const m = clearAlong(h, o); if (m < 0.02) continue;
@@ -537,6 +538,7 @@
   let width = 0, settle;
   function relayout() {
     W = document.documentElement.clientWidth; H = innerHeight; D = document.body.offsetHeight;
+    REACH = Math.max(140, Math.min(200, W / 7));
     layer.style.height = D + "px";
     navH = document.querySelector(".nav")?.getBoundingClientRect().height || 0;
     measure();
