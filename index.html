@@ -92,13 +92,23 @@
   @media (max-width: 639px) { #launch .panel { --p-h: 220px; } }
   /* phone: the sell command wraps onto a second row rather than lose its flags */
   @media (max-width: 639px) { #homelabs .ui-term__cmd { height: auto; flex-wrap: wrap; } #homelabs .ui-term__typed { white-space: normal; overflow: visible; flex: 1 1 0; } }
-  /* the page's ground: one quiet swarm of hosts behind the whole page (canvas tiles in a layer as tall as
-     the page, so it scrolls with the content; aria-hidden, no text). It sits under every section (z -1, above only the page's own background); the one section that
+  /* the page's ground: one quiet swarm of hosts behind the whole page (an SVG in a layer as tall as the
+     page, so it scrolls with the content; aria-hidden, no text). It sits under every section (z -1, above only the page's own background); the one section that
      paints a ground lets it through at 85%, which over white reads as the same cream. It keeps clear of
      every block of words and every panel (measured in script). */
   .page-swarm { position: absolute; top: 0; left: 0; width: 100%; z-index: -1; pointer-events: none; overflow: hidden;
     -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 6%, #000 94%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, #000 6%, #000 94%, transparent 100%); }
-  .page-swarm > canvas { position: absolute; left: 0; width: 100%; }
+  .page-swarm { opacity: 0; transition: opacity 2s ease; }
+  .page-swarm.is-on { opacity: 1; }
+  .page-swarm > svg { position: absolute; top: 0; left: 0; overflow: visible; }
+  .page-swarm line { stroke: var(--p-ink); stroke-width: 1; transition: opacity 2s ease; }
+  .page-swarm circle { transition: opacity 2s ease; }
+  .page-swarm circle.is-new { opacity: .3 !important; }
+  /* a write in flight and its arrival: compositor-only (transform, opacity) */
+  .swarm-write, .swarm-flash { position: absolute; top: 0; left: 0; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(var(--p-accent) 30%, transparent 70%); will-change: transform; }
+  .swarm-flash { width: 24px; height: 24px; margin: -12px 0 0 -12px; background: radial-gradient(color-mix(in srgb, var(--p-accent) 35%, transparent), transparent 70%); animation: swarm-flash 1.2s ease-out forwards; }
+  @keyframes swarm-flash { from { opacity: 1; scale: .4; } to { opacity: 0; scale: 1.4; } }
   main > .ground-surface { background: color-mix(in srgb, var(--bg) 85%, transparent); }
   @media print { .page-swarm { display: none; } }
   /* small links stay charcoal on hover: ember on white is under 4.5:1 for small text */
@@ -378,36 +388,37 @@
 </footer>
 
 <script>
-/* The page's ground: one quiet swarm of hosts across the landing page, each
+/* The page's ground: one quiet swarm of hosts behind the landing page, each
    holding the whole app. A write passes host to host; now and then a host goes
    dark and another lights nearby, copying from a neighbour. No words.
 
-   Cost: every geometric question (is this point clear of the page's words and
-   panels?) is answered once, when a host is placed or linked, against blocks
-   indexed by row, and remeasured only when the layout changes. The swarm is drawn
-   on canvas tiles placed in the page itself, so the browser scrolls it with the
-   content and scrolling costs nothing; only the tiles near the screen exist. A
-   frame (30 fps, never in a hidden tab) only drifts the hosts near the screen
-   and stamps them with one pre-drawn glow. */
+   Nothing is drawn per frame. The hosts and links are one SVG as tall as the
+   page, built once (the browser rasterizes it once and scrolls it with the
+   content); a write is a dot gliding along a link on a CSS transform (the
+   compositor moves it); a host going dark or lighting up is a CSS fade. Script
+   only wakes every few seconds, to start a write or swap a host. Where a point
+   may sit (clear of the page's words and panels) is answered once, when it is
+   placed, against blocks indexed by row; remeasured only when the layout changes. */
 (function () {
   const layer = document.getElementById("page-swarm");
-  if (!layer || !document.createElement("canvas").getContext) return;
+  if (!layer) return;
   const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const NS = "http://www.w3.org/2000/svg";
   const KEEP = "h1,h2,h3,p,li,pre,table,a.btn,button,.pill,.frame,.panel,.ui,.hero__window,.footer__col,.nav__logo,.footer__legal,.link,.step-num";
-  const PAD = 36, ROW = 160, REACH = 420;              // clearance, row height of the block index, link reach
+  const PAD = 36, ROW = 160, REACH = 420, SPEED = 110;   // clearance, block-index row, link reach, px/s of a write
+  const LIT = 0.6;                                       // a host's brightness where it is fully clear
   const rand = (a, b) => a + Math.random() * (b - a);
+  const el = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
 
-  let W = 0, H = 0, D = 0, navH = 0, rows = new Map(), ink = "43,36,32";
-  let hosts = [], edges = [], pulses = [], version = 0, ids = 0;
-  let t = 0, last = 0, running = false, pointer = null;
-  let nextWrite = 1.2, nextChange = 5;
+  let W = 0, H = 0, D = 0, navH = 0, rows = new Map(), ids = 0, version = 0;
+  let hosts = [], svg = null, gLinks = null, gHosts = null;
 
-  // ---- the page's blocks, indexed by row ----------------------------------------------------
+  // ---- the page's blocks, indexed by row --------------------------------------------------------
   function measure() {
     const Y = scrollY; rows = new Map();
-    for (const el of document.querySelectorAll(KEEP)) {
-      if (el.closest(".nav") && !el.matches(".nav__logo")) continue;
-      const b = el.getBoundingClientRect(); if (!b.width || !b.height) continue;
+    for (const e of document.querySelectorAll(KEEP)) {
+      if (e.closest(".nav") && !e.matches(".nav__logo")) continue;
+      const b = e.getBoundingClientRect(); if (!b.width || !b.height) continue;
       const r = { x0: b.left, x1: b.right, y0: b.top + Y, y1: b.bottom + Y };
       for (let k = Math.floor((r.y0 - PAD) / ROW); k <= Math.floor((r.y1 + PAD) / ROW); k++) (rows.get(k) || rows.set(k, []).get(k)).push(r);
     }
@@ -421,187 +432,119 @@
     }
     return Math.min(1, Math.max(0, (d - 8) / (PAD - 8)));
   }
-  // the clearance of a link: its worst point, sampled every 24px (once, when linked)
+  // a link's clearance: its worst point, sampled every 24px
   function clearAlong(a, b) {
-    const n = Math.max(2, Math.ceil(Math.hypot(b.hx - a.hx, b.hy - a.hy) / 24));
+    const n = Math.max(2, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 24));
     let m = 1;
-    for (let i = 1; i < n && m > 0; i++) m = Math.min(m, room(a.hx + (b.hx - a.hx) * i / n, a.hy + (b.hy - a.hy) * i / n));
+    for (let i = 1; i < n && m > 0; i++) m = Math.min(m, room(a.x + (b.x - a.x) * i / n, a.y + (b.y - a.y) * i / n));
     return m;
   }
 
-  // ---- one glow, drawn once ------------------------------------------------------------------
-  const glow = document.createElement("canvas");
-  function paintGlow(rgb) {
-    glow.width = glow.height = 64;
-    const g = glow.getContext("2d"), grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-    grad.addColorStop(0, `rgba(${rgb},1)`); grad.addColorStop(0.18, `rgba(${rgb},.9)`); grad.addColorStop(0.2, `rgba(${rgb},.32)`); grad.addColorStop(1, `rgba(${rgb},0)`);
-    g.fillStyle = grad; g.fillRect(0, 0, 64, 64);
-  }
-
-  // ---- hosts and the links between them ------------------------------------------------------
-  const host = (x, y, lit) => ({ id: ids++, hx: x, hy: y, x, y, ph: rand(0, 6.28), r: rand(1.3, 2.3), m: room(x, y), a: lit ? 1 : 0, state: lit ? "on" : "kindling", ver: lit ? version : -1, flash: 0, near: [] });
+  // ---- hosts and links, as SVG ------------------------------------------------------------------
   function spot(y0, y1) {
     const gap = Math.max(54, W / 16);
     for (let i = 0; i < 40; i++) {
       const x = rand(10, W - 10), y = rand(y0, y1);
-      if (room(x, y) > 0.8 && !hosts.some((h) => Math.abs(h.hy - y) < gap && Math.hypot(h.hx - x, h.hy - y) < gap)) return [x, y];
+      if (room(x, y) > 0.8 && !hosts.some((h) => Math.abs(h.y - y) < gap && Math.hypot(h.x - x, h.y - y) < gap)) return { x, y };
     }
     return null;
   }
+  function addHost(p, lit) {
+    const r = rand(1.3, 2.3), h = { id: ids++, x: p.x, y: p.y, m: room(p.x, p.y), ver: lit ? version : -1, near: [], lines: [] };
+    h.dot = el("circle", { cx: p.x.toFixed(1), cy: p.y.toFixed(1), r: (r * 5).toFixed(1), fill: "url(#swarm-glow)", class: lit ? "" : "is-new" });
+    h.dot.style.opacity = lit ? (LIT * h.m).toFixed(2) : 0;
+    gHosts.appendChild(h.dot); hosts.push(h);
+    return h;
+  }
+  // three nearest neighbours each; a link is drawn once, its strength its clearance
   function relink() {
-    hosts.sort((a, b) => a.hy - b.hy);
-    const seen = new Set(); edges = [];
+    hosts.sort((a, b) => a.y - b.y);
+    gLinks.replaceChildren();
+    for (const h of hosts) h.lines = [];
+    const seen = new Set();
     for (let i = 0; i < hosts.length; i++) {
       const h = hosts[i], near = [];
-      for (let j = i - 1; j >= 0 && h.hy - hosts[j].hy < REACH; j--) near.push(hosts[j]);
-      for (let j = i + 1; j < hosts.length && hosts[j].hy - h.hy < REACH; j++) near.push(hosts[j]);
-      near.sort((a, b) => Math.hypot(a.hx - h.hx, a.hy - h.hy) - Math.hypot(b.hx - h.hx, b.hy - h.hy));
+      for (let j = i - 1; j >= 0 && h.y - hosts[j].y < REACH; j--) near.push(hosts[j]);
+      for (let j = i + 1; j < hosts.length && hosts[j].y - h.y < REACH; j++) near.push(hosts[j]);
+      near.sort((a, b) => Math.hypot(a.x - h.x, a.y - h.y) - Math.hypot(b.x - h.x, b.y - h.y));
       h.near = near.slice(0, 3);
       for (const o of h.near) {
-        const a = h.hy < o.hy ? h : o, b = a === h ? o : h, key = a.id * 4096 + b.id;
-        if (!seen.has(key)) { seen.add(key); edges.push({ a, b, m: clearAlong(a, b), top: a.hy - 10, bot: b.hy + 10 }); }
+        const key = Math.min(h.id, o.id) * 65536 + Math.max(h.id, o.id); if (seen.has(key)) continue; seen.add(key);
+        const m = clearAlong(h, o); if (m < 0.02) continue;
+        const line = el("line", { x1: h.x.toFixed(1), y1: h.y.toFixed(1), x2: o.x.toFixed(1), y2: o.y.toFixed(1) });
+        line.style.opacity = (0.08 * m).toFixed(3);
+        gLinks.appendChild(line); h.lines.push(line); o.lines.push(line);
       }
     }
   }
   function build() {
-    hosts = []; pulses = [];
+    const accent = getComputedStyle(document.documentElement).getPropertyValue("--p-accent").trim() || "#e8590c";
+    svg = el("svg", { width: W, height: D, viewBox: `0 0 ${W} ${D}` });
+    svg.innerHTML = `<defs><radialGradient id="swarm-glow"><stop offset="0" stop-color="${accent}"/><stop offset=".18" stop-color="${accent}" stop-opacity=".9"/><stop offset=".2" stop-color="${accent}" stop-opacity=".3"/><stop offset="1" stop-color="${accent}" stop-opacity="0"/></radialGradient></defs>`;
+    gLinks = el("g", { class: "swarm-links" }); gHosts = el("g", { class: "swarm-hosts" });
+    svg.append(gLinks, gHosts);
+    layer.replaceChildren(svg);
+    hosts = [];
     const n = Math.max(24, Math.min(160, Math.round((W * D) / 26000)));
-    for (let i = 0; i < n * 3 && hosts.length < n; i++) { const p = spot(navH + 8, D - 8); if (p) hosts.push(host(p[0], p[1], true)); }
+    for (let i = 0; i < n * 3 && hosts.length < n; i++) { const p = spot(navH + 8, D - 8); if (p) addHost(p, true); }
     relink();
   }
-  function reclear() { for (const h of hosts) h.m = room(h.hx, h.hy); for (const e of edges) e.m = clearAlong(e.a, e.b); }
 
-  // hosts on screen: a binary search over hosts sorted by height
-  function firstAt(y) { let lo = 0, hi = hosts.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (hosts[mid].hy < y) lo = mid + 1; else hi = mid; } return lo; }
-  function onScreen(Y) { const out = []; for (let i = firstAt(Y + navH - 20); i < hosts.length && hosts[i].hy < Y + H + 20; i++) if (hosts[i].state === "on") out.push(hosts[i]); return out; }
-
-  // ---- what happens ----------------------------------------------------------------------------
-  function send(from, ver) { for (const to of from.near) if (to.state === "on" && to.ver < ver) pulses.push({ from, to, ver, k: 0, dur: Math.max(0.6, Math.hypot(to.hx - from.hx, to.hy - from.hy) / 110) }); }
-  function write() { const L = onScreen(scrollY); if (!L.length) return; const h = L[(Math.random() * L.length) | 0]; version++; h.ver = version; h.flash = 1; send(h, version); }
+  // ---- what happens, every few seconds ------------------------------------------------------------
+  const onScreen = () => hosts.filter((h) => h.dot.isConnected && !h.going && h.y > scrollY + navH && h.y < scrollY + H);
+  // a write: a dot glides from host to neighbour on a CSS transform; each arrival passes it on
+  function glide(from, to, ver) {
+    const d = document.createElement("i");
+    d.className = "swarm-write";
+    d.style.transform = `translate(${from.x}px, ${from.y}px)`;
+    layer.appendChild(d);
+    const dur = Math.hypot(to.x - from.x, to.y - from.y) / SPEED;
+    d.getBoundingClientRect();                                   // start from here
+    d.style.transition = `transform ${dur.toFixed(2)}s linear`;
+    d.style.transform = `translate(${to.x}px, ${to.y}px)`;
+    setTimeout(() => { d.remove(); arrive(to, ver); }, dur * 1000);
+  }
+  function arrive(h, ver) {
+    if (h.going || h.ver >= ver || !h.dot.isConnected) return;
+    h.ver = ver;
+    if (h.dot.classList.contains("is-new")) { h.dot.classList.remove("is-new"); h.dot.style.opacity = (LIT * h.m).toFixed(2); }
+    const f = document.createElement("i"); f.className = "swarm-flash"; f.style.transform = `translate(${h.x}px, ${h.y}px)`;
+    layer.appendChild(f); setTimeout(() => f.remove(), 1200);
+    for (const o of h.near) if (!o.going && o.ver < ver && !o.dot.classList.contains("is-new")) glide(h, o, ver);
+  }
+  function write() { const L = onScreen(); if (!L.length) return; version++; arrive(L[(Math.random() * L.length) | 0], version); }
+  // a host goes dark; another lights nearby, dim until it has copied the app from a neighbour
   function change() {
-    const Y = scrollY, L = onScreen(Y);
-    if (L.length > 3) L[(Math.random() * L.length) | 0].state = "fading";
-    const p = spot(Y + navH + 8, Y + H - 8); if (!p) return;
-    const h = host(p[0], p[1], false); hosts.push(h); relink();
-    const src = h.near.find((o) => o.state === "on");
-    if (src) pulses.push({ from: src, to: h, ver: version, k: 0, dur: 1 });
-  }
-  function step(dt) {
-    t += dt;
-    let gone = false;
-    for (const h of hosts) {
-      if (h.state === "fading" && (h.a -= dt * 0.5) <= 0) { h.state = "gone"; gone = true; }
-      else if (h.state === "kindling") h.a = Math.min(0.35, h.a + dt * 0.3);
-      if (h.flash) h.flash = Math.max(0, h.flash - dt * 0.9);
+    const L = onScreen();
+    if (L.length > 3) {
+      const h = L[(Math.random() * L.length) | 0]; h.going = true;
+      h.dot.style.opacity = 0; for (const l of h.lines) l.style.opacity = 0;
+      setTimeout(() => { h.dot.remove(); hosts = hosts.filter((o) => o !== h); relink(); }, 2200);
     }
-    if (gone) { hosts = hosts.filter((h) => h.state !== "gone"); relink(); }
-    for (let i = pulses.length - 1; i >= 0; i--) {
-      const p = pulses[i]; if ((p.k += dt / p.dur) < 1) continue;
-      pulses[i] = pulses[pulses.length - 1]; pulses.pop();
-      const h = p.to; if ((h.state !== "on" && h.state !== "kindling") || h.ver >= p.ver) continue;
-      h.ver = p.ver; h.flash = 0.8; if (h.state === "kindling") { h.state = "on"; h.a = 1; }
-      send(h, p.ver);
-    }
-    if ((nextWrite -= dt) <= 0) { write(); nextWrite = rand(3, 4.5); }
-    if ((nextChange -= dt) <= 0) { change(); nextChange = rand(6, 10); }
+    const p = spot(scrollY + navH + 8, scrollY + H - 8); if (!p) return;
+    const h = addHost(p, false); relink();
+    const src = h.near.find((o) => !o.going && !o.dot.classList.contains("is-new"));
+    if (src) setTimeout(() => glide(src, h, version), 900);
   }
+  let timers = [];
+  function schedule(fn, a, b) { const tick = () => { if (!document.hidden) fn(); timers.push(setTimeout(tick, rand(a, b) * 1000)); }; timers.push(setTimeout(tick, rand(a, b) * 1000)); }
 
-  // ---- the layer: canvas tiles placed in the page, so the browser scrolls them with it ----------
-  const TILE = 512, MARGIN = 200;                // tile height; how far off screen a tile is kept
-  const tiles = new Map();                       // tile index -> 2d context
-  let dpr = 1;
-  function tileAt(i) {
-    let c = tiles.get(i); if (c) return c;
-    const el = document.createElement("canvas");
-    el.style.top = i * TILE + "px"; el.style.height = TILE + "px";
-    el.width = Math.round(W * dpr); el.height = Math.round(TILE * dpr);
-    layer.appendChild(el);
-    c = el.getContext("2d"); c.setTransform(dpr, 0, 0, dpr, 0, -i * TILE * dpr);   // page coordinates
-    tiles.set(i, c); paint(i, c);
-    return c;
-  }
-  // keep the tiles near the screen; drop the rest
-  function syncTiles() {
-    const i0 = Math.max(0, Math.floor((scrollY - MARGIN) / TILE)), i1 = Math.floor((scrollY + H + MARGIN) / TILE);
-    for (const [i, c] of tiles) if (i < i0 || i > i1) { c.canvas.remove(); tiles.delete(i); }
-    for (let i = i0; i <= i1 && i * TILE < D; i++) tileAt(i);
-  }
-  function dropTiles() { for (const c of tiles.values()) c.canvas.remove(); tiles.clear(); }
-
-  // ---- one tile ------------------------------------------------------------------------------------
-  function paint(i, c) {
-    const top = i * TILE, bottom = top + TILE, fade = still ? 1 : Math.min(1, t / 2);
-    c.clearRect(0, top, W, TILE);
-    c.lineWidth = 1;
-    for (const e of edges) {
-      if (e.bot < top || e.top > bottom) continue;
-      const m = e.m * Math.min(e.a.a, e.b.a) * fade; if (m < 0.02) continue;
-      c.strokeStyle = `rgba(${ink},${(0.08 * m).toFixed(3)})`;
-      c.beginPath(); c.moveTo(e.a.x, e.a.y); c.lineTo(e.b.x, e.b.y); c.stroke();
-    }
-    for (const p of pulses) {
-      const y = p.from.y + (p.to.y - p.from.y) * p.k; if (y < top - 4 || y > bottom + 4) continue;
-      const m = Math.min(p.from.m, p.to.m) * fade; if (m < 0.02) continue;
-      c.globalAlpha = 0.8 * m; c.drawImage(glow, p.from.x + (p.to.x - p.from.x) * p.k - 4, y - 4, 8, 8);
-    }
-    const py = pointer && pointer.y + scrollY;
-    for (let k = firstAt(top - 30); k < hosts.length && hosts[k].hy < bottom + 30; k++) {
-      const h = hosts[k], m = h.m * h.a * fade; if (m < 0.02) continue;
-      const near = pointer ? Math.max(0, 1 - Math.hypot(h.x - pointer.x, h.y - py) / 170) : 0;
-      const R = h.r * (5 + 4 * h.flash);
-      c.globalAlpha = Math.min(1, (0.55 + 0.4 * Math.max(h.flash, near)) * m * (h.ver === version ? 1 : 0.6));
-      c.drawImage(glow, h.x - R, h.y - R, R * 2, R * 2);
-    }
-    c.globalAlpha = 1;
-  }
-  // drift the hosts near the screen (and nudge them from the pointer), then repaint their tiles
-  function render() {
-    const y0 = scrollY - MARGIN - REACH, y1 = scrollY + H + MARGIN + REACH, py = pointer && pointer.y + scrollY;
-    for (let i = firstAt(y0); i < hosts.length && hosts[i].hy < y1; i++) {
-      const h = hosts[i]; let dx = 0, dy = 0;
-      if (pointer) { const px = pointer.x - h.hx, qy = py - h.hy, d = Math.hypot(px, qy); if (d < 150) { const f = -(1 - d / 150) * 9 / (d || 1); dx = px * f; dy = qy * f; } }
-      h.x = h.hx + (still ? 0 : Math.sin(t * 0.22 + h.ph) * 5) + dx;
-      h.y = h.hy + (still ? 0 : Math.cos(t * 0.18 + h.ph * 1.3) * 4) + dy;
-    }
-    syncTiles();
-    for (const [i, c] of tiles) paint(i, c);
-  }
-
-  // ---- when to draw: 30 fps, only while the tab is shown; scrolling needs no redraw ----------------
-  let drawn = 0;
-  function frame(now) {
-    if (!running) return;
-    requestAnimationFrame(frame);
-    step(Math.min(0.05, (now - last) / 1000 || 0)); last = now;
-    if (now - drawn > 33) { render(); drawn = now; }
-  }
-  function play(go) {
-    if (still) return;
-    if (go && !running) { running = true; last = performance.now(); requestAnimationFrame(frame); }
-    if (!go) running = false;
-  }
-  function size() {
-    dpr = Math.min(1.5, devicePixelRatio || 1);    // faint hairlines need no more; keeps the tiles light
+  // ---- layout ---------------------------------------------------------------------------------------
+  let width = 0, settle;
+  function relayout() {
     W = document.documentElement.clientWidth; H = innerHeight; D = document.body.offsetHeight;
     layer.style.height = D + "px";
     navH = document.querySelector(".nav")?.getBoundingClientRect().height || 0;
-    const cs = getComputedStyle(document.documentElement), hex = (v) => { const m = /#([0-9a-f]{6})/i.exec(v); if (!m) return null; const n = parseInt(m[1], 16); return `${n >> 16},${(n >> 8) & 255},${n & 255}`; };
-    ink = hex(cs.getPropertyValue("--p-ink")) || ink;
-    paintGlow(hex(cs.getPropertyValue("--p-accent")) || "232,89,12");
+    measure();
+    if (Math.abs(W - width) > 40 || !svg) { width = W; build(); return; }
+    svg.setAttribute("height", D); svg.setAttribute("viewBox", `0 0 ${W} ${D}`);
+    for (const h of hosts) { h.m = room(h.x, h.y); if (!h.going && !h.dot.classList.contains("is-new")) h.dot.style.opacity = (LIT * h.m).toFixed(2); }
+    relink();
   }
-  // layout changes: remeasure; a new width rebuilds the swarm, anything else only rechecks clearance
-  let width = 0, settle;
-  function relayout() {
-    size(); measure();
-    if (Math.abs(W - width) > 40 || !hosts.length) { width = W; build(); } else reclear();
-    dropTiles(); render();
-  }
-  addEventListener("pointermove", (e) => { pointer = e.pointerType === "mouse" ? { x: e.clientX, y: e.clientY } : null; }, { passive: true });
-  document.documentElement.addEventListener("pointerleave", () => { pointer = null; });
-  addEventListener("scroll", syncTiles, { passive: true });          // only adds and drops tiles
-  document.addEventListener("visibilitychange", () => play(!document.hidden));
   (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => setTimeout(() => {
-    relayout(); play(!document.hidden);
+    relayout();
+    layer.classList.add("is-on");
+    if (!still) { schedule(write, 3, 4.5); schedule(change, 6, 10); }
     new ResizeObserver(() => { clearTimeout(settle); settle = setTimeout(relayout, 250); }).observe(document.body);
     addEventListener("resize", () => { clearTimeout(settle); settle = setTimeout(relayout, 250); });
   }, 400));
