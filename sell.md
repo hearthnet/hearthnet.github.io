@@ -145,6 +145,10 @@ hearth sell-coin 300000 --price 3000 [--float 100]
 
 This locks 300,000 market coin from your seller key (a month of one chain at the default price) on Lattice's own exchange, for 3,000 `Nexus/testnet` coin for all of it. `--price` is what a buyer pays for the whole lot, in the coin of the market's parent chain. Before it signs, it checks the amounts and that your key keeps at least `--float` coin (default 100) for its fees. To sell block rewards, `hearth sweep` them to your seller key first.
 
+The running seller signs with the same key, so, like `hearth sweep`, it refuses while the seller runs or a lattice-sponsor answers on `--sponsor-port`, and says how to pause the seller without closing your offers.
+
+Because a deposit can't be cancelled, a retry never locks a second lot by accident: if your key already has an open deposit of the same amount and price, it prints that deposit and sends nothing. Pass `--again` to lock another identical lot.
+
 It prints the deposit and what a buyer pays:
 
 ```
@@ -173,12 +177,12 @@ storage pinned by the sponsor: 12.0 MiB of its 256.0 MiB budget, 1.0 MiB held fo
 `hearth status` adds the exchange:
 
 ```
-exchange: the cheapest market coin on sale is 300000 for 3000 Nexus/testnet coin (0.0100 each), of 4 open deposits
-on sale: 300000 for 3000 Nexus/testnet coin (0.0100 each), deposit <address>/3000/<nonce>
+exchange: the cheapest market coin on sale is 300000 for 3000 Nexus/testnet coin (0.01 each), of 4 open deposits
+on sale: 300000 for 3000 Nexus/testnet coin (0.01 each), deposit <address>/3000/<nonce>
 the seller's key holds 3000 on Nexus/testnet, where buyers of its coin pay it
 ```
 
-A deposit someone has paid for says `bought by <address>, who paid you on Nexus/testnet` until they take the coin.
+A deposit someone has paid for says `bought by <address>, who paid you on Nexus/testnet` until they take the coin. The reads are bounded: the cheapest is of the first 1,000 deposit entries (it says so when there are more), your own are read by your address, and at most 20 of their payments are checked. The price per coin is exact; `~` marks one cut at 8 decimals.
 
 *Earned* is what other buyers paid your key for hosting you owe or owed: settled orders (16 market blocks) judged *owed*, and settled renewals of those chains that bought time (not ones after a close). Void, full and taken orders, and your own orders, count in neither. *Settling* is what buyers paid in orders and renewals that have not settled yet. `hearth status` never waits: if the market isn't synced it says `market not synced (height X of Y)`, and each read has a deadline. With `--node`, the storage line is skipped, since the sponsor runs beside the remote node. The storage line comes from the sponsor's `GET /terms`: what it has pinned, what it holds for uploads still being paid, and what is left of the budget.
 

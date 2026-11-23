@@ -183,7 +183,7 @@ Each run burns again. To burn only up to a total, use `hearth sell --burn`.
 Puts the seller key's market coin on sale on Lattice's exchange: a deposit on the market that a buyer takes by paying `--price` on the market's parent chain. See [Sell your coin](sell.md#sell-your-coin-hearth-sell-coin).
 
 ```
-hearth sell-coin <coin> --price <parent coin> [--float 100] [--market Nexus/testnet/lodger-3129cc]
+hearth sell-coin <coin> --price <parent coin> [--float 100] [--again] [--sponsor-port 8650] [--market Nexus/testnet/lodger-3129cc]
                  [--root <node root> | --node <url> --token-file <file>] [--key <file>] [--lattice lattice] [--fee <n>]
 ```
 
@@ -192,6 +192,8 @@ hearth sell-coin <coin> --price <parent coin> [--float 100] [--market Nexus/test
 | `<coin>` | required | Whole market coin to lock, 1 to 9007199254740991. |
 | `--price <parent coin>` | required | Whole parent-chain coin a buyer pays for all of it. |
 | `--float <coin>` | `100` | What the key keeps for fees: it refuses to lock more than its balance less the float and the fee. |
+| `--again` | off | Lock it even if the key already has an open deposit of the same amount and price. Without it, that deposit is printed and nothing is sent. |
+| `--sponsor-port <port>` | `8650` | It refuses while a lattice-sponsor answers here. |
 | `--fee <n>` | the market's `minRelayFee`, else 1 | The transaction's fee. |
 
-The key must exist. Every amount is checked before the node is asked anything. The deposit's nonce is the key's account nonce. It prints the deposit, the transaction, and what a buyer pays. The buyer's payment lands in the key's address on the parent: there is nothing to claim. A deposit can't be cancelled: Lattice has no cancel or refund, so it stays locked until someone buys it (the seller included, paying its price to itself).
+The key must exist. Every amount is checked before the node is asked anything. Like `hearth sweep`, it refuses while the seller runs (its pid file) or a lattice-sponsor answers on `--sponsor-port`. It waits for the market to sync; each read then has a 15 s deadline and the whole a 120 s one. The deposit's nonce is the key's account nonce. It prints the deposit, the transaction, and what a buyer pays. The buyer's payment lands in the key's address on the parent: there is nothing to claim. A deposit can't be cancelled: Lattice has no cancel or refund, so it stays locked until someone buys it (the seller included, paying its price to itself).
