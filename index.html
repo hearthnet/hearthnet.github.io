@@ -92,12 +92,13 @@
   @media (max-width: 639px) { #launch .panel { --p-h: 220px; } }
   /* phone: the sell command wraps onto a second row rather than lose its flags */
   @media (max-width: 639px) { #homelabs .ui-term__cmd { height: auto; flex-wrap: wrap; } #homelabs .ui-term__typed { white-space: normal; overflow: visible; flex: 1 1 0; } }
-  /* the page's ground: one quiet swarm of hosts behind the whole page (a fixed canvas, aria-hidden, no
-     text). It sits under every section (z -1, above only the page's own background); the one section that
+  /* the page's ground: one quiet swarm of hosts behind the whole page (canvas tiles in a layer as tall as
+     the page, so it scrolls with the content; aria-hidden, no text). It sits under every section (z -1, above only the page's own background); the one section that
      paints a ground lets it through at 85%, which over white reads as the same cream. It keeps clear of
      every block of words and every panel (measured in script). */
-  .page-swarm { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;
+  .page-swarm { position: absolute; top: 0; left: 0; width: 100%; z-index: -1; pointer-events: none; overflow: hidden;
     -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 6%, #000 94%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, #000 6%, #000 94%, transparent 100%); }
+  .page-swarm > canvas { position: absolute; left: 0; width: 100%; }
   main > .ground-surface { background: color-mix(in srgb, var(--bg) 85%, transparent); }
   @media print { .page-swarm { display: none; } }
   /* small links stay charcoal on hover: ember on white is under 4.5:1 for small text */
@@ -128,7 +129,7 @@
   </div>
 </header>
 
-<canvas class="page-swarm" id="page-swarm" aria-hidden="true"></canvas>
+<div class="page-swarm" id="page-swarm" aria-hidden="true"></div>
 <main id="top">
   <section class="hero hero--centred" data-enter aria-labelledby="hero-h">
     <div class="wrap"><div class="hero-text">
@@ -383,13 +384,14 @@
 
    Cost: every geometric question (is this point clear of the page's words and
    panels?) is answered once, when a host is placed or linked, against blocks
-   indexed by row, and remeasured only when the layout changes. A frame then only
-   moves and stamps the hosts on screen with one pre-drawn glow: at 30 fps at
-   rest, every frame while the page scrolls, never in a hidden tab. */
+   indexed by row, and remeasured only when the layout changes. The swarm is drawn
+   on canvas tiles placed in the page itself, so the browser scrolls it with the
+   content and scrolling costs nothing; only the tiles near the screen exist. A
+   frame (30 fps, never in a hidden tab) only drifts the hosts near the screen
+   and stamps them with one pre-drawn glow. */
 (function () {
-  const canvas = document.getElementById("page-swarm");
-  if (!canvas || !canvas.getContext) return;
-  const ctx = canvas.getContext("2d");
+  const layer = document.getElementById("page-swarm");
+  if (!layer || !document.createElement("canvas").getContext) return;
   const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const KEEP = "h1,h2,h3,p,li,pre,table,a.btn,button,.pill,.frame,.panel,.ui,.hero__window,.footer__col,.nav__logo,.footer__legal,.link,.step-num";
   const PAD = 36, ROW = 160, REACH = 420;              // clearance, row height of the block index, link reach
@@ -397,7 +399,7 @@
 
   let W = 0, H = 0, D = 0, navH = 0, rows = new Map(), ink = "43,36,32";
   let hosts = [], edges = [], pulses = [], version = 0, ids = 0;
-  let t = 0, last = 0, drawn = 0, lastY = -1, running = false, pointer = null;
+  let t = 0, last = 0, running = false, pointer = null;
   let nextWrite = 1.2, nextChange = 5;
 
   // ---- the page's blocks, indexed by row ----------------------------------------------------
@@ -504,50 +506,74 @@
     if ((nextChange -= dt) <= 0) { change(); nextChange = rand(6, 10); }
   }
 
-  // ---- one frame ---------------------------------------------------------------------------------
-  function draw() {
-    const Y = scrollY, top = Y + navH, bottom = Y + H;
-    ctx.clearRect(0, 0, W, H);
-    ctx.save(); ctx.beginPath(); ctx.rect(0, navH, W, H - navH); ctx.clip();   // never under the bar
-    const fade = still ? 1 : Math.min(1, t / 2);
-    // move the hosts on screen (drift, and a nudge away from the pointer)
-    const i0 = firstAt(top - REACH);
-    for (let i = i0; i < hosts.length && hosts[i].hy < bottom + REACH; i++) {
-      const h = hosts[i]; let dx = 0, dy = 0;
-      if (pointer) { const px = pointer.x - h.hx, py = pointer.y + Y - h.hy, d = Math.hypot(px, py); if (d < 150) { const f = -(1 - d / 150) * 9 / (d || 1); dx = px * f; dy = py * f; } }
-      h.x = h.hx + (still ? 0 : Math.sin(t * 0.22 + h.ph) * 5) + dx;
-      h.y = h.hy + (still ? 0 : Math.cos(t * 0.18 + h.ph * 1.3) * 4) + dy;
-    }
-    ctx.lineWidth = 1;
+  // ---- the layer: canvas tiles placed in the page, so the browser scrolls them with it ----------
+  const TILE = 512, MARGIN = 200;                // tile height; how far off screen a tile is kept
+  const tiles = new Map();                       // tile index -> 2d context
+  let dpr = 1;
+  function tileAt(i) {
+    let c = tiles.get(i); if (c) return c;
+    const el = document.createElement("canvas");
+    el.style.top = i * TILE + "px"; el.style.height = TILE + "px";
+    el.width = Math.round(W * dpr); el.height = Math.round(TILE * dpr);
+    layer.appendChild(el);
+    c = el.getContext("2d"); c.setTransform(dpr, 0, 0, dpr, 0, -i * TILE * dpr);   // page coordinates
+    tiles.set(i, c); paint(i, c);
+    return c;
+  }
+  // keep the tiles near the screen; drop the rest
+  function syncTiles() {
+    const i0 = Math.max(0, Math.floor((scrollY - MARGIN) / TILE)), i1 = Math.floor((scrollY + H + MARGIN) / TILE);
+    for (const [i, c] of tiles) if (i < i0 || i > i1) { c.canvas.remove(); tiles.delete(i); }
+    for (let i = i0; i <= i1 && i * TILE < D; i++) tileAt(i);
+  }
+  function dropTiles() { for (const c of tiles.values()) c.canvas.remove(); tiles.clear(); }
+
+  // ---- one tile ------------------------------------------------------------------------------------
+  function paint(i, c) {
+    const top = i * TILE, bottom = top + TILE, fade = still ? 1 : Math.min(1, t / 2);
+    c.clearRect(0, top, W, TILE);
+    c.lineWidth = 1;
     for (const e of edges) {
       if (e.bot < top || e.top > bottom) continue;
       const m = e.m * Math.min(e.a.a, e.b.a) * fade; if (m < 0.02) continue;
-      ctx.strokeStyle = `rgba(${ink},${(0.08 * m).toFixed(3)})`;
-      ctx.beginPath(); ctx.moveTo(e.a.x, e.a.y - Y); ctx.lineTo(e.b.x, e.b.y - Y); ctx.stroke();
+      c.strokeStyle = `rgba(${ink},${(0.08 * m).toFixed(3)})`;
+      c.beginPath(); c.moveTo(e.a.x, e.a.y); c.lineTo(e.b.x, e.b.y); c.stroke();
     }
     for (const p of pulses) {
-      const y = p.from.y + (p.to.y - p.from.y) * p.k; if (y < top || y > bottom) continue;
-      const x = p.from.x + (p.to.x - p.from.x) * p.k, m = Math.min(p.from.m, p.to.m) * fade; if (m < 0.02) continue;
-      ctx.globalAlpha = 0.8 * m; ctx.drawImage(glow, x - 4, y - Y - 4, 8, 8);
+      const y = p.from.y + (p.to.y - p.from.y) * p.k; if (y < top - 4 || y > bottom + 4) continue;
+      const m = Math.min(p.from.m, p.to.m) * fade; if (m < 0.02) continue;
+      c.globalAlpha = 0.8 * m; c.drawImage(glow, p.from.x + (p.to.x - p.from.x) * p.k - 4, y - 4, 8, 8);
     }
-    for (let i = firstAt(top - 30); i < hosts.length && hosts[i].hy < bottom + 30; i++) {
-      const h = hosts[i], m = h.m * h.a * fade; if (m < 0.02) continue;
-      const near = pointer ? Math.max(0, 1 - Math.hypot(h.x - pointer.x, h.y - Y - pointer.y) / 170) : 0;
+    const py = pointer && pointer.y + scrollY;
+    for (let k = firstAt(top - 30); k < hosts.length && hosts[k].hy < bottom + 30; k++) {
+      const h = hosts[k], m = h.m * h.a * fade; if (m < 0.02) continue;
+      const near = pointer ? Math.max(0, 1 - Math.hypot(h.x - pointer.x, h.y - py) / 170) : 0;
       const R = h.r * (5 + 4 * h.flash);
-      ctx.globalAlpha = Math.min(1, (0.55 + 0.4 * Math.max(h.flash, near)) * m * (h.ver === version ? 1 : 0.6));
-      ctx.drawImage(glow, h.x - R, h.y - Y - R, R * 2, R * 2);
+      c.globalAlpha = Math.min(1, (0.55 + 0.4 * Math.max(h.flash, near)) * m * (h.ver === version ? 1 : 0.6));
+      c.drawImage(glow, h.x - R, h.y - R, R * 2, R * 2);
     }
-    ctx.restore(); ctx.globalAlpha = 1;
+    c.globalAlpha = 1;
+  }
+  // drift the hosts near the screen (and nudge them from the pointer), then repaint their tiles
+  function render() {
+    const y0 = scrollY - MARGIN - REACH, y1 = scrollY + H + MARGIN + REACH, py = pointer && pointer.y + scrollY;
+    for (let i = firstAt(y0); i < hosts.length && hosts[i].hy < y1; i++) {
+      const h = hosts[i]; let dx = 0, dy = 0;
+      if (pointer) { const px = pointer.x - h.hx, qy = py - h.hy, d = Math.hypot(px, qy); if (d < 150) { const f = -(1 - d / 150) * 9 / (d || 1); dx = px * f; dy = qy * f; } }
+      h.x = h.hx + (still ? 0 : Math.sin(t * 0.22 + h.ph) * 5) + dx;
+      h.y = h.hy + (still ? 0 : Math.cos(t * 0.18 + h.ph * 1.3) * 4) + dy;
+    }
+    syncTiles();
+    for (const [i, c] of tiles) paint(i, c);
   }
 
-  // ---- when to draw ----------------------------------------------------------------------------
+  // ---- when to draw: 30 fps, only while the tab is shown; scrolling needs no redraw ----------------
+  let drawn = 0;
   function frame(now) {
     if (!running) return;
     requestAnimationFrame(frame);
-    const dt = Math.min(0.05, (now - last) / 1000 || 0); last = now;
-    step(dt);
-    const scrolled = scrollY !== lastY;                     // keep pace with the page while it moves
-    if (scrolled || now - drawn > 33) { draw(); drawn = now; lastY = scrollY; }
+    step(Math.min(0.05, (now - last) / 1000 || 0)); last = now;
+    if (now - drawn > 33) { render(); drawn = now; }
   }
   function play(go) {
     if (still) return;
@@ -555,10 +581,9 @@
     if (!go) running = false;
   }
   function size() {
-    const dpr = Math.min(2, devicePixelRatio || 1);
-    W = innerWidth; H = innerHeight; D = document.documentElement.scrollHeight;
-    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    dpr = Math.min(1.5, devicePixelRatio || 1);    // faint hairlines need no more; keeps the tiles light
+    W = document.documentElement.clientWidth; H = innerHeight; D = document.body.offsetHeight;
+    layer.style.height = D + "px";
     navH = document.querySelector(".nav")?.getBoundingClientRect().height || 0;
     const cs = getComputedStyle(document.documentElement), hex = (v) => { const m = /#([0-9a-f]{6})/i.exec(v); if (!m) return null; const n = parseInt(m[1], 16); return `${n >> 16},${(n >> 8) & 255},${n & 255}`; };
     ink = hex(cs.getPropertyValue("--p-ink")) || ink;
@@ -569,11 +594,11 @@
   function relayout() {
     size(); measure();
     if (Math.abs(W - width) > 40 || !hosts.length) { width = W; build(); } else reclear();
-    draw();
+    dropTiles(); render();
   }
   addEventListener("pointermove", (e) => { pointer = e.pointerType === "mouse" ? { x: e.clientX, y: e.clientY } : null; }, { passive: true });
   document.documentElement.addEventListener("pointerleave", () => { pointer = null; });
-  if (still) addEventListener("scroll", draw, { passive: true });
+  addEventListener("scroll", syncTiles, { passive: true });          // only adds and drops tiles
   document.addEventListener("visibilitychange", () => play(!document.hidden));
   (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => setTimeout(() => {
     relayout(); play(!document.hidden);
