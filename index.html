@@ -476,10 +476,17 @@
       for (let j = i - 1; j >= 0 && h.y - hosts[j].y < REACH; j--) near.push(hosts[j]);
       for (let j = i + 1; j < hosts.length && hosts[j].y - h.y < REACH; j++) near.push(hosts[j]);
       const d = (o) => Math.hypot(o.x - h.x, o.y - h.y);
-      h.near = near.filter((o) => d(o) <= REACH).sort((a, b) => d(a) - d(b)).slice(0, 3);
+      // a neighbour is only a host the link to which stays clear of the page's words and panels:
+      // writes travel these links, so none ever crosses text
+      h.near = []; h.clear = new Map();
+      for (const o of near.filter((o) => d(o) <= REACH).sort((a, b) => d(a) - d(b))) {
+        if (h.near.length === 3) break;
+        const m = clearAlong(h, o); if (m < 0.6) continue;
+        h.near.push(o); h.clear.set(o, m);
+      }
       for (const o of h.near) {
         const key = Math.min(h.id, o.id) * 65536 + Math.max(h.id, o.id); if (seen.has(key)) continue; seen.add(key);
-        const m = clearAlong(h, o); if (m < 0.02) continue;
+        const m = h.clear.get(o);
         const line = el("line", { x1: h.x.toFixed(1), y1: h.y.toFixed(1), x2: o.x.toFixed(1), y2: o.y.toFixed(1) });
         line.style.opacity = (0.08 * m).toFixed(3);
         gLinks.appendChild(line); h.lines.push(line); o.lines.push(line);
