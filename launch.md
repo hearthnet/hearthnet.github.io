@@ -22,7 +22,8 @@ The page takes these settings in its URL:
 
 | Parameter | What it sets |
 |---|---|
-| `?node=` | The node it reads from and sends to. Point it at your own node's read URL. |
+| `?node=` | The node it reads from and sends to. Point it at your own node's read URL. Without it, the page finds one (below). |
+| `?entry=` | A node hosting Nexus that the page asks for the market's nodes. Default `https://rpc.lattice.build`. |
 | `?market=` | The market chain. Default `Nexus/hearth`. |
 | `?sponsor=` | A fee sponsor that pays out parent coin for work. None by default; **Earn with this device** shows only when one is given. |
 | `?blockSeconds=` | Seconds per market block, used only to show durations. Default `60`. |
@@ -121,7 +122,7 @@ When paid time ends, a host may stop hosting your chain and drop its data. Anyon
 
 ## Check a host
 
-By default the page reads from one public node, `https://rpc.hearthnet.io`. If your app pins its first block or a checkpoint, every value is checked against a block whose headers link back to it. One node alone can still serve old or made-up data; with two or more nodes run by different operators, a value is shown only from a block at least two of them report holding (in lattice-sdk, pass `connect` your app's `genesis` or a `checkpoint`, and a list of nodes). One node can also withhold records. Burns and block reads come from the node's API.
+By default the page finds the market's nodes through Lattice: it asks a Nexus node (`?entry=`) for the read URLs the market's hosts declare, and reads from one whose market has the market's first block (genesis). It reads from that one node. If your app pins its first block or a checkpoint, every value is checked against a block whose headers link back to it. One node alone can still serve old or made-up data; with two or more nodes run by different operators, a value is shown only from a block at least two of them report holding (in lattice-sdk, pass `connect` your app's `genesis` or a `checkpoint`, and a list of nodes). One node can also withhold records. Burns and block reads come from the node's API.
 
 To trust only yourself, run a node that hosts the market and open the page with:
 
