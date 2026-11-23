@@ -26,7 +26,7 @@ Every subcommand finds the node, the seller's key and the market with these flag
 
 | Flag | Default | Description |
 |---|---|---|
-| `--root <dir>` | `--root`, else the current directory, else `~/.lattice`, else `~/.hearth/node`: the first with `chains/Nexus/.cookie`; with none, Hearth starts its own | The node's root. A `--root` with no node there (no `lattice.json` or `chains/Nexus`) stops with `no node at <root>`. |
+| `--root <dir>` | `--root`, else the current directory, else `~/.lattice`: the first with `chains/Nexus/.cookie`; with none, Hearth's own (`~/.hearth/node`, made by `hearth sell`) | The node's root. A `--root` with no node there (no `lattice.json` or `chains/Nexus`) stops with `no node at <root>`. |
 | `--node <url>` | none | A node's operator listener. Needs `--token-file`. |
 | `--token-file <file>` | none | The operator token for `--node`. |
 | `--key <file>` | `<root>/hearth/seller.json`, or `./hearth/seller.json` with `--node` | The seller's key. |

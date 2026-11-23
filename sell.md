@@ -32,7 +32,7 @@ A host does three things for each chain it sells: it hosts the chain on its node
 - Node.js 22 or later.
 - macOS on Apple silicon, or Linux on x86-64.
 
-That's all. Hearth runs the node it sells from: the first time, it downloads a pinned node and sponsor into `~/.hearth/bin` (each checked against a SHA-256 written into Hearth), makes the node in `~/.hearth/node` and starts it. The node keeps running after the command (its log is `~/.hearth/node/node.log`), and every `hearth` command uses it (to stop it: `~/.hearth/bin/lattice-node-5.0.0/lattice down --root ~/.hearth/node`). It listens on port 4001 for peers and serves its operator API on `127.0.0.1:8080`.
+That's all. Hearth runs the node it sells from: the first time, it downloads a pinned node and sponsor into `~/.hearth/bin` (each checked against a SHA-256 written into Hearth), makes the node in `~/.hearth/node`, and runs it while `hearth sell` sells (its log is `~/.hearth/node/node.log`). Stop the seller and the node stops with it; other `hearth` commands use it while it runs, or start it for as long as they take. To keep selling across restarts, see [Keep it running](#keep-it-running). It listens on port 4001 for peers and serves its operator API on `127.0.0.1:8080`.
 
 Already run a node (5.0.0 or newer)? Give its root with `--root`, or `--node` with `--token-file` for one elsewhere.
 
@@ -50,7 +50,7 @@ It checks every flag, and that a node lives at `--root` when you give one, befor
 
 ## What it does
 
-1. **Finds the node.** It uses `--root`, else the current directory, else `~/.lattice`, else `~/.hearth/node`: the first that holds a running node's `chains/Nexus/.cookie`. With none, it starts its own (see [Prerequisites](#prerequisites)). With `--node` and `--token-file` it uses a node elsewhere instead.
+1. **Finds the node.** It uses `--root`, else the current directory, else `~/.lattice`: the first that holds a running node's `chains/Nexus/.cookie`. With none, it runs its own (see [Prerequisites](#prerequisites)); a node of your own there that is not running stops it with `the node at <dir> is not running`. With `--node` and `--token-file` it uses a node elsewhere instead.
 2. **Checks the node** is 5.0.0 or newer, by its features.
 3. **Makes the seller's key** at `<root>/hearth/seller.json` unless there is one. The file is mode 0600. It prints the address, never the key, and says what you earn and what you can spend it on. It refuses a key file that others can read.
 4. **Writes the offer file** from the flags, once, at `<root>/hearth/<offer id>.json`. The offer id comes from the terms, so the same flags find the same file.
