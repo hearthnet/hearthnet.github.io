@@ -26,7 +26,7 @@ Each hosting offer names the address its blocks pay, as its line `blocks <addres
 
 ## Anyone can mine
 
-Anyone else may mine a hosted chain too, for its block reward. A Lattice miner merged-mines the chains its node hosts. A buyer who wants the rewards of their own chain can mine it.
+Anyone else may mine a hosted chain too, for its block reward. A miner merged-mines the chains its node hosts. A buyer who wants the rewards of their own chain can mine it.
 
 ## How a buyer checks the blocks
 

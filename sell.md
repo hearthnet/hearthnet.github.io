@@ -6,11 +6,11 @@ title: Sell hosting
 
 # Sell hosting
 
-This page shows how to sell hosting from your Lattice node with one command, keep it running, and stop it.
+This page shows how to sell hosting with one command, keep it running, and stop it.
 
 ## Why host
 
-To earn Hearth coin, the market's coin. Hosts earn it, then spend it on hosting or storage from any seller, or sell it on Lattice's exchange (see [Sell your coin](#sell-your-coin-hearth-sell-coin)), where buyers buy it on the app's **Buy coin** page. You earn it two ways:
+To earn Hearth coin, the market's coin. Hosts earn it, then spend it on hosting or storage from any seller, or sell it on the chains' own exchange (see [Sell your coin](#sell-your-coin-hearth-sell-coin)), where buyers buy it on the app's **Buy coin** page. You earn it two ways:
 
 - **Orders.** Buyers pay your seller key for each chain you host, by the day.
 - **Block rewards.** The market pays 1,000 coin a block, about one block a minute. Your seller makes market blocks (see [Blocks](#blocks)), and each one it makes pays your sponsor's key. `hearth sweep` moves them to your seller key.
@@ -29,36 +29,32 @@ A host does three things for each chain it sells: it hosts the chain on its node
 
 ## Prerequisites
 
-- A running Lattice node, **5.0.0 or newer** (`lattice up`). See the [Lattice docs](https://lattice.build/docs/). The seller checks the node's features (its `GET /config` saying which layer lists each chain) and stops beside an older one with "Hearth needs Lattice 5.0.0 or newer (you have X: ...)".
-- `lattice-sponsor` on your `PATH`, or `--sponsor-bin <path>`. See the [Lattice docs](https://lattice.build/docs/) for where to get it.
 - Node.js 22 or later.
-- Hearth itself, from source (it is not on npm yet; `npx @hearthnet/hearth` soon):
+- macOS on Apple silicon, or Linux on x86-64.
 
-```
-git clone https://github.com/hearthnet/hearth && npm i -g ./hearth
-```
+That's all. Hearth runs the node it sells from: the first time, it downloads a pinned node and sponsor into `~/.hearth/bin` (each checked against a SHA-256 written into Hearth), makes the node in `~/.hearth/node` and starts it. The node keeps running after the command (its log is `~/.hearth/node/node.log`), and every `hearth` command uses it (to stop it: `~/.hearth/bin/lattice-node-5.0.0/lattice down --root ~/.hearth/node`). It listens on port 4001 for peers and serves its operator API on `127.0.0.1:8080`.
+
+Already run a node (5.0.0 or newer)? Give its root with `--root`, or `--node` with `--token-file` for one elsewhere.
 
 ## The command
 
-In the node's root, or with `--root`:
-
 ```
-hearth sell
+npx @hearthnet/hearth sell
 ```
 
 This sells hosting for up to 10 small chains under `Nexus` (see [Offer terms](#offer-terms)), at 10,000 market coin per chain per day (`--price 10000/day`; give `--price` to choose another), for 30 days, on the market `Nexus/hearth`. It runs in the foreground.
 
-It checks every flag, and that a Lattice node lives at `--root`, before it writes anything. A `--root` with no node stops with `no Lattice node at <root>`. Every subcommand takes `--help`.
+It checks every flag, and that a node lives at `--root` when you give one, before it writes anything. A `--root` with no node stops with `no node at <root>`. Every subcommand takes `--help`.
 
 **The first sync of Nexus and the market takes a few minutes.** Until the node has synced the market, the seller prints `syncing market: h / H` (its tip against the best header its peers showed) and reads, funds, writes and burns nothing.
 
 ## What it does
 
-1. **Finds the node.** It uses `--root`, else the current directory, else `~/.lattice` (where a bare `lattice-node` keeps its storage): the first that holds a running node's `chains/Nexus/.cookie`. With `--node` and `--token-file` it uses a node elsewhere instead.
-2. **Checks the node** is Lattice 5.0.0 or newer, by its features.
+1. **Finds the node.** It uses `--root`, else the current directory, else `~/.lattice`, else `~/.hearth/node`: the first that holds a running node's `chains/Nexus/.cookie`. With none, it starts its own (see [Prerequisites](#prerequisites)). With `--node` and `--token-file` it uses a node elsewhere instead.
+2. **Checks the node** is 5.0.0 or newer, by its features.
 3. **Makes the seller's key** at `<root>/hearth/seller.json` unless there is one. The file is mode 0600. It prints the address, never the key, and says what you earn and what you can spend it on. It refuses a key file that others can read.
 4. **Writes the offer file** from the flags, once, at `<root>/hearth/<offer id>.json`. The offer id comes from the terms, so the same flags find the same file.
-5. **Runs the seller** (`host/sell-hosting.mjs`) in the foreground. Beside the node it starts lattice-sponsor (below). Every `--interval` seconds (default 30) it makes one pass:
+5. **Runs the seller** (`host/sell-hosting.mjs`) in the foreground. Beside the node it starts the sponsor (below). Every `--interval` seconds (default 30) it makes one pass:
    1. It adds the market and the offer's parent to its own fragment of the node's configuration, `hostmarket` (`config.d/hostmarket.json`), so the node hosts them.
    2. Once the node has synced the market, it reads the market at its tip and judges its own orders, the same way every reader does.
    3. Once the key holds enough market coin (see [Funding](#funding)), it writes the offer (and the URL record, if `--url`), then the storage offer, then any changed URL.
@@ -81,7 +77,7 @@ See [Blocks and mining](mining.md) for how buyers check the blocks.
 
 ## Sponsor
 
-Beside the node the seller runs lattice-sponsor, and starts it again, with backoff, whenever it exits. Its key is `<root>/hearth/sponsor.json` (mode 0600), never the seller's: it owns nothing but its float, which the blocks pay.
+Beside the node the seller runs the sponsor, and starts it again, with backoff, whenever it exits. Its key is `<root>/hearth/sponsor.json` (mode 0600), never the seller's: it owns nothing but its float, which the blocks pay.
 
 The sponsor:
 
@@ -91,7 +87,7 @@ The sponsor:
 
 Without `--sponsor-url` it listens on loopback only, and the offer names no sponsor. With `--sponsor-url https://host.example/sponsor` it listens on every interface (put TLS in front of the port), and the offer names that URL. The URL must be `https`, or `http` on loopback.
 
-With `--node` (a remote node) the seller runs no sponsor: lattice-sponsor reaches a node only on its loopback, so run it there.
+With `--node` (a remote node) the seller runs no sponsor: a sponsor reaches a node only on its loopback, so run it there.
 
 ## What an offer says
 
@@ -105,24 +101,24 @@ Block rewards build up in the sponsor's key, on every chain the seller makes blo
 hearth sweep [--float 100] [--chain <path>]
 ```
 
-It moves what the sponsor's key holds on one chain (default the market), keeping the float, the fees it holds for transactions it signed, and any fund deposits. It signs with the sponsor's key, so it refuses while the seller runs, or while any lattice-sponsor answers on `--sponsor-port`, and says how to pause the seller: stop its service (or the process), run `hearth sweep`, and start it again (with `--resume` when you start it by hand). Don't use `hearth stop` for this: it closes your offers.
+It moves what the sponsor's key holds on one chain (default the market), keeping the float, the fees it holds for transactions it signed, and any fund deposits. It signs with the sponsor's key, so it refuses while the seller runs, or while any sponsor answers on `--sponsor-port`, and says how to pause the seller: stop its service (or the process), run `hearth sweep`, and start it again (with `--resume` when you start it by hand). Don't use `hearth stop` for this: it closes your offers.
 
 ## Funding
 
 Every write on the market costs a fee in market coin. Before it writes, the seller checks that its key holds three fees: for the offer, the URL record and a storage offer.
 
-You don't have to fund it. The seller's blocks pay the sponsor's key (1,000 market coin a market block), so for its first writes the seller moves four fees (enough for a close too) from the sponsor's key to its own, then starts lattice-sponsor. It moves them before the sponsor starts, so nothing else signs with that key at the same time. You see:
+You don't have to fund it. The seller's blocks pay the sponsor's key (1,000 market coin a market block), so for its first writes the seller moves four fees (enough for a close too) from the sponsor's key to its own, then starts the sponsor. It moves them before the sponsor starts, so nothing else signs with that key at the same time. You see:
 
 ```
-moving 4 market coin of the sponsor key's block rewards to the seller's key for its first writes (lattice-sponsor starts once it has landed)
+moving 4 market coin of the sponsor key's block rewards to the seller's key for its first writes (the sponsor starts once it has landed)
 ```
 
-It moves them once the sponsor's key holds five fees: the four it moves, and the fee for the move itself. Until then, it says it is waiting for block rewards, and how to skip the wait. If any lattice-sponsor already answers on `--sponsor-port` (one you started yourself could sign with the same key), it moves nothing, and says so.
+It moves them once the sponsor's key holds five fees: the four it moves, and the fee for the move itself. Until then, it says it is waiting for block rewards, and how to skip the wait. If any sponsor already answers on `--sponsor-port` (one you started yourself could sign with the same key), it moves nothing, and says so.
 
 With `--node` (no sponsor beside it), or once an offer of yours is out, it moves nothing. If the key is short then, it prints:
 
 ```
-Send at least <n> coin on Nexus/hearth to <address>, from any account that holds some, or earn it with this machine: hearth earn --sponsor <url>; this seller waits and checks again every 30 s. The sponsor's key holds the block rewards: hearth sweep moves them here while no lattice-sponsor signs with it.
+Send at least <n> coin on Nexus/hearth to <address>, from any account that holds some, or earn it with this machine: hearth earn --sponsor <url>; this seller waits and checks again every 30 s. The sponsor's key holds the block rewards: hearth sweep moves them here while no sponsor signs with it.
 ```
 
 Send market coin to the address from any account, buy it in the web app (see [Buy market coin](launch.md#1-buy-market-coin)), or earn it:
@@ -143,9 +139,9 @@ The coin you earn is yours to spend on hosting or storage, or to sell. Buyers of
 hearth sell-coin 300000 --price 3000 [--float 100]
 ```
 
-This locks 300,000 market coin from your seller key (a month of one chain at the default price) on Lattice's own exchange, for 3,000 `Nexus` coin for all of it. `--price` is what a buyer pays for the whole lot, in the coin of the market's parent chain. Before it signs, it checks the amounts and that your key keeps at least `--float` coin (default 100) for its fees. To sell block rewards, `hearth sweep` them to your seller key first.
+This locks 300,000 market coin from your seller key (a month of one chain at the default price) on the chains' own exchange, for 3,000 `Nexus` coin for all of it. `--price` is what a buyer pays for the whole lot, in the coin of the market's parent chain. Before it signs, it checks the amounts and that your key keeps at least `--float` coin (default 100) for its fees. To sell block rewards, `hearth sweep` them to your seller key first.
 
-The running seller signs with the same key, so, like `hearth sweep`, it refuses while the seller runs or a lattice-sponsor answers on `--sponsor-port`, and says how to pause the seller without closing your offers.
+The running seller signs with the same key, so, like `hearth sweep`, it refuses while the seller runs or a sponsor answers on `--sponsor-port`, and says how to pause the seller without closing your offers.
 
 Because a deposit can't be cancelled, a retry never locks a second lot by accident: if your key already has an open deposit of the same amount and price, it prints that deposit and sends nothing. Pass `--again` to lock another identical lot.
 
@@ -154,12 +150,12 @@ It prints the deposit and what a buyer pays:
 ```
 locked 300000 market coin on Nexus/hearth for sale at 3000 Nexus coin: deposit <address>/3000/<nonce>
 transaction <cid>
-A buyer pays 3000 Nexus coin (and that chain's fee) on Nexus; Lattice credits it straight to <address> there, with nothing to claim, and the buyer takes the coin. ...
+A buyer pays 3000 Nexus coin (and that chain's fee) on Nexus; the chain credits it straight to <address> there, with nothing to claim, and the buyer takes the coin. ...
 ```
 
-**Getting paid.** When a buyer pays, Lattice moves the price from the buyer to your address on `Nexus` in the same transaction. You don't claim anything, and nothing needs to run. Your seller key's address is the same on every chain, so the key you sell with is the key that holds the payment.
+**Getting paid.** When a buyer pays, the chain moves the price from the buyer to your address on `Nexus` in the same transaction. You don't claim anything, and nothing needs to run. Your seller key's address is the same on every chain, so the key you sell with is the key that holds the payment.
 
-**No cancel.** Lattice has no cancel or refund for a deposit. The coin stays locked until someone buys it. The only way back is to buy it yourself like any buyer: pay its price to your own address on `Nexus` and take the coin, at a fee on each chain. Price it to sell.
+**No cancel.** There is no cancel or refund for a deposit. The coin stays locked until someone buys it. The only way back is to buy it yourself like any buyer: pay its price to your own address on `Nexus` and take the coin, at a fee on each chain. Price it to sell.
 
 **Pricing.** `hearth status` shows the cheapest coin on sale on the market, in parent coin per market coin, and each of your deposits, with the buyer once one has paid for it.
 
@@ -211,7 +207,7 @@ Each set of flags names its own offer. Running again with the same flags finds t
 | `--url <url>` | none | Your public read URL. Without it you sell key only. |
 | `--proof <url>` | `<url's origin>/.well-known/lattice.json` | Where your domain lists your address, if not the default. |
 | `--storage-offer <file>` | none | Also write a storage offer from this file. |
-| `--sponsor-bin <path>` | `lattice-sponsor` | The lattice-sponsor to run. |
+| `--sponsor-bin <path>` | Hearth's own | The sponsor to run. |
 | `--sponsor-port <port>` | `8650` | The port the sponsor listens on. |
 | `--sponsor-url <url>` | none | The sponsor's public URL (`https`, or loopback). The offer names it. |
 | `--storage-rate <n>` | `10240` | Bytes the sponsor pins per market coin. |
@@ -221,7 +217,7 @@ Each set of flags names its own offer. Running again with the same flags finds t
 | `--fee <n>` | the chain's minimum relay fee, else 1 | The fee for each write and burn. |
 | `--interval <s>` | `30` | Seconds between passes. |
 | `--once` | off | Make one pass and exit. |
-| `--lattice <path>` | `lattice` | The `lattice` command. |
+| `--lattice <path>` | Hearth's own | The node's command-line tool, for a node of your own. |
 | `--install` | off | Write services for the node and the seller, print how to load them, and exit. |
 | `--resume` | off | Write no offer version on start (what the installed service runs). |
 
@@ -264,7 +260,7 @@ To set other terms, write an offer file and pass `--offer`. `period` is in marke
 **You choose what to serve.** No protocol rule makes you host or serve anything:
 
 - Without `--sponsor-url` your sponsor listens on loopback only, so strangers can't pin files through it. The trade-off: your offer names no sponsor, so your buyers' visitors can't write for work.
-- `--storage-budget` caps what your sponsor holds pinned at once (default `256M`, lower than lattice-sponsor's own 1 GiB). An upload that doesn't fit is refused. Lower it, or use a separate disk.
+- `--storage-budget` caps what your sponsor holds pinned at once (default `256M`, lower than the sponsor's own 1 GiB). An upload that doesn't fit is refused. Lower it, or use a separate disk.
 - The offer's limits cap how fast a chain grows (see [Offer terms](#offer-terms)). An offer file can set them lower, or list the policy `modules` you accept instead of `any`.
 - `hearth stop --now` stops hosting at once. A chain you stop hosting is dropped from the node's configuration; what it stored stays on disk until you delete it.
 
@@ -274,7 +270,7 @@ To set other terms, write an offer file and pass `--offer`. `period` is in marke
 hearth unpin <cid>
 ```
 
-Run it beside the node (in its root, or with `--root`). It asks the sponsor on `--sponsor-port` to take the file down (`POST /takedown`, with the node's cookie as the operator's credential): the sponsor unpins its Volumes on the node, frees their bytes from the budget, and refuses that CID from then on, for storing, work and payment. The seller must be running, since its sponsor serves the route. It needs a lattice-sponsor with the takedown route; an older one answers that it has none. If the node refuses the unpin, the CID is still blocked: run `hearth unpin` again.
+Run it beside the node (Hearth's own, or with `--root`). It asks the sponsor on `--sponsor-port` to take the file down (`POST /takedown`, with the node's cookie as the operator's credential): the sponsor unpins its Volumes on the node, frees their bytes from the budget, and refuses that CID from then on, for storing, work and payment. The seller must be running, since its sponsor serves the route. It needs a lattice-sponsor with the takedown route; an older one answers that it has none. If the node refuses the unpin, the CID is still blocked: run `hearth unpin` again.
 
 **Whoever paid for a file you take down loses the rest of its time. It is never refunded.**
 
@@ -338,7 +334,7 @@ It runs no sponsor there (see [Sponsor](#sponsor)). A token that may write a fra
 hearth sell --install
 ```
 
-`--install` writes services for both the node (`lattice up --root <root>`) and the seller, prints the commands that load them, and exits. It loads nothing itself. The seller's service runs with `--resume`, so a restart writes no new offer version. Running `--install` itself counts as running `hearth sell` again: the service's next start writes one version from the offer file.
+`--install` writes services for both the node (Hearth's own, or the one at `--root`) and the seller, prints the commands that load them, and exits. It loads nothing itself. The seller's service runs with `--resume`, so a restart writes no new offer version. Running `--install` itself counts as running `hearth sell` again: the service's next start writes one version from the offer file.
 
 **Linux.** systemd user units `~/.config/systemd/user/hearth-node.service` and `hearth.service` (which starts after the node and requires it). Load them with:
 
@@ -350,7 +346,7 @@ loginctl enable-linger $USER && systemctl --user daemon-reload && systemctl --us
 
 **macOS.** launchd agents `~/Library/LaunchAgents/net.hearth.node.plist` and `net.hearth.seller.plist`, logging to `~/Library/Logs/hearth-node.log` and `hearth.log`. The command prints the `launchctl bootstrap` lines that load them. launchd has no ordering, so the seller waits for the node itself. A launch agent runs while you are logged in; the command also says how to make them LaunchDaemons for boot.
 
-The node is started again after a failure exit (which includes `lattice restart`), but not after `lattice down` or an invalid configuration. The seller is started again after a failure, not after it exits 0. If your node already runs under another service, load only the seller's.
+The node is started again after a failure exit (which includes a restart), but not after a clean stop or an invalid configuration. The seller is started again after a failure, not after it exits 0. If your node already runs under another service, load only the seller's.
 
 Other systems are not supported by `--install`.
 
