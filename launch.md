@@ -24,7 +24,7 @@ The page takes these settings in its URL:
 |---|---|
 | `?node=` | The node it reads from and sends to. Point it at your own node's read URL. Without it, the page finds one (below). |
 | `?entry=` | A node hosting Nexus that the page asks for the market's nodes. Default `https://rpc.lattice.build`. |
-| `?market=` | The market chain. Default `Nexus/hearth`. |
+| `?market=` | The market chain. Default `Nexus/hearth`. Another network's market (testnet) also needs that network's `?node=` or `?entry=`. |
 | `?sponsor=` | A fee sponsor that pays out parent coin for work. None by default; **Earn with this device** shows only when one is given. |
 | `?blockSeconds=` | Seconds per market block, used only to show durations. Default `60`. |
 
