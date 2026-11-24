@@ -61,8 +61,8 @@ Your offer is one record on the market, `offer/<your address>/<id>` (`--id`, def
 
 ```
 hashrate 5000000      hashes per second you mine every chain you host with
-throughput 6000       coin per kB/s of block capacity, per period
-storage 600           coin per kB of state growth, per period
+throughput 60         coin per kB/s of block capacity, per period
+storage 6             coin per kB of state growth, per period
 period 1440           market blocks a period lasts
 blocks bafyrei...     the address your blocks pay: your sponsor's key
 ```
@@ -70,8 +70,8 @@ blocks bafyrei...     the address your blocks pay: your sponsor's key
 | Line | Flag | Default |
 |---|---|---|
 | `hashrate` | `--hashrate <hashes/s>` | What your miner measured over its first minute. The offer waits for it. Once written, a measured rate is not rewritten as it wanders. |
-| `throughput` | `--throughput <coin>` | `6000` |
-| `storage` | `--storage <coin>` | `600` |
+| `throughput` | `--throughput <coin>` | `60` |
+| `storage` | `--storage <coin>` | `6` |
 | `period` | `--period <blocks>` | `1d`: market blocks, or hours, days or weeks (`12h`, `1d`, `2w`) at the market's block time |
 | `blocks` | none | Your sponsor's key |
 
@@ -79,7 +79,7 @@ The hash rate isn't priced. It says how hard you mine: each chain you host gets 
 
 There's no URL, no limit on chain size, no capacity and no parent in an offer. You host any path a buyer orders, at any size; your prices are what make a big or fast chain cost more.
 
-**Prices.** A chain costs, per period, `throughput × maxBlockSize ÷ targetBlockTime` (its block capacity in kB/s) plus `storage × maxStateGrowth ÷ 1000` (its state growth in kB), each rounded up. You run every chain from Nexus down to the one ordered, so a buyer pays for each of them, Nexus included, each priced by its own spec. At the defaults, a small chain (20 kB blocks every 30 s, 10 kB of state growth) costs 4,000 + 6,000 = 10,000 a day, and the chains above it add their own prices. See [Price](how-it-works.md#price).
+**Prices.** A chain costs, per period, `throughput × maxBlockSize ÷ targetBlockTime` (its block capacity in kB/s) plus `storage × maxStateGrowth ÷ 1000` (its state growth in kB), each rounded up. You run every chain from Nexus down to the one ordered, so a buyer pays for each of them, Nexus included, each priced by its own spec. At the defaults, a small chain (20 kB blocks every 30 s, 10 kB of state growth) costs 40 + 60 = 100 a day itself, and the chains above it add their own prices: under `Nexus/testnet` the whole path comes to about 25,000 a day. See [Price](how-it-works.md#price).
 
 **Changing it.** The seller writes the offer once, and changes it in place whenever the flags' terms or the address your blocks pay differ from what the market says. Run `hearth sell` with new flags to change your prices. An order asserts your offer unchanged, so an order priced at your old terms doesn't land after a change; orders already in a block keep the terms they landed on. The offer stays on sale until you stop it (`hearth stop`): there is no end date and nothing to renew.
 
@@ -200,8 +200,8 @@ A deposit someone has paid for says `bought by <address>, who paid you on Nexus/
 
 | Flag | Default | What it does |
 |---|---|---|
-| `--throughput <coin>` | `6000` | Whole market coin per kB/s of block capacity, per period. |
-| `--storage <coin>` | `600` | Whole market coin per kB of state growth, per period. |
+| `--throughput <coin>` | `60` | Whole market coin per kB/s of block capacity, per period. |
+| `--storage <coin>` | `6` | Whole market coin per kB of state growth, per period. |
 | `--period <n>` | `1d` | The period: market blocks, or hours, days or weeks (`12h`, `1d`, `2w`) at the market's block time. |
 | `--hashrate <hashes/s>` | measured | The hash rate the offer claims. Without it, the rate the miner measures over its first minute. |
 | `--id <id>` | `1` | The offer's id: no slash or space. |

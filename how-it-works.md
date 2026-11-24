@@ -64,7 +64,7 @@ ceil(throughput × maxBlockSize ÷ targetBlockTime) + ceil(storage × maxStateGr
 
 with `maxBlockSize` and `maxStateGrowth` in bytes and `targetBlockTime` in milliseconds, all from the chain's spec. A host runs every chain from Nexus down to the one ordered, so an order pays for each of them, Nexus included, each priced by its own spec. The total is at least 1.
 
-For example, at 6,000 per kB/s and 600 per kB, a chain with 20 kB blocks every 30 s and 10 kB of state growth costs 4,000 + 6,000 = 10,000 a period. The chains above it add their own prices.
+For example, at 60 per kB/s and 6 per kB, a chain with 20 kB blocks every 30 s and 10 kB of state growth costs 40 + 60 = 100 a period itself. The chains above it add their own prices, which dominate: under `Nexus/testnet` the whole path comes to about 25,000 a period.
 
 ### Orders
 

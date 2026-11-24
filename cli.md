@@ -40,7 +40,7 @@ Every subcommand finds the node, the seller's key and the market with these flag
 Sells hosting, in the foreground: writes your offer, mines every chain the node hosts (Hearth's own node unless you give one), hosts and starts the chains it is paid for, and runs the sponsor beside the node. See [Sell hosting](sell.md).
 
 ```
-hearth sell [--throughput 6000] [--storage 600] [--period 1d] [--hashrate <hashes/s>] [--id 1]
+hearth sell [--throughput 60] [--storage 6] [--period 1d] [--hashrate <hashes/s>] [--id 1]
             [--public | --key-only] [--market Nexus/testnet/hearth]
             [--root <node root> | --node <url> --token-file <file>] [--key <file>] [--lattice <path>]
             [--interval 30] [--fee <n>] [--once]
@@ -51,8 +51,8 @@ hearth sell [--throughput 6000] [--storage 600] [--period 1d] [--hashrate <hashe
 
 | Flag | Default | Description |
 |---|---|---|
-| `--throughput <coin>` | `6000` | Whole market coin per kB/s of block capacity (`maxBlockSize ÷ targetBlockTime`), per period, for each chain on a buyer's path. |
-| `--storage <coin>` | `600` | Whole market coin per kB of `maxStateGrowth`, per period, for each chain on a buyer's path. |
+| `--throughput <coin>` | `60` | Whole market coin per kB/s of block capacity (`maxBlockSize ÷ targetBlockTime`), per period, for each chain on a buyer's path. |
+| `--storage <coin>` | `6` | Whole market coin per kB of `maxStateGrowth`, per period, for each chain on a buyer's path. |
 | `--period <n>` | `1d` | Market blocks, or hours, days or weeks (`12h`, `1d`, `2w`) at the market's block time. |
 | `--hashrate <hashes/s>` | measured | The hash rate the offer claims. Without it, the rate the miner measures over its first minute; the offer waits for it. |
 | `--id <id>` | `1` | The offer's id, with no slash or space. |
