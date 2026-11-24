@@ -41,7 +41,7 @@ Sells hosting, in the foreground: hosts the chains it sells on the node (Hearth'
 
 ```
 hearth sell [--price 10000/day] [--parent Nexus] [--chains 10]
-            [--url https://host.example [--proof <url>]] [--market Nexus/hearth]
+            [--url https://host.example [--proof <url>] | --public | --key-only] [--market Nexus/hearth]
             [--root <node root> | --node <url> --token-file <file>] [--key <file>] [--lattice <path>] [--offer offer.json]
             [--id <offer id>] [--storage-offer storage.json] [--interval 30] [--fee <n>] [--once]
             [--sponsor-bin <path>] [--sponsor-port 8650] [--sponsor-url <https url>]
@@ -51,12 +51,14 @@ hearth sell [--price 10000/day] [--parent Nexus] [--chains 10]
 
 | Flag | Default | Description |
 |---|---|---|
-| `--price <coin>/<period>` | `10000/day` | Whole market coin per chain per period; the period in market blocks or `hour`, `day`, `week`. Not with `--offer`. |
+| `--price <coin>/<period>` | `10000/day` | Whole market coin per chain on the path per period; the period in market blocks or `hour`, `day`, `week`. Not with `--offer`. |
 | `--offer <file>` | none | An offer file instead of `--price`. |
 | `--parent <path>` | `Nexus` | With `--price`: the parent the offer's chains go under. |
 | `--chains <n>` | `10` | With `--price`: how many chains the offer sells. |
 | `--id <id>` | `o-` + 10 hex digits of a hash of the terms | With `--price`: the offer's id. |
-| `--url <url>` | none | Your public read URL. Without it, you sell key only. |
+| `--url <url>` | none | Your public read URL. Without it, on Hearth's own node, Hearth makes you reachable through a quick tunnel (`--public`). |
+| `--public` | on Hearth's own node with no `--url` | Serve the node's public read port, the sponsor and your proof through a local proxy and a Cloudflare quick tunnel; sell with its URL. See [Reachable by default](sell.md#reachable-by-default-a-domain-or-key-only). |
+| `--key-only` | off | No URL: no tunnel, and a URL record written before is removed. |
 | `--proof <url>` | `<url's origin>/.well-known/lattice.json` | Where your domain lists your address. |
 | `--storage-offer <file>` | none | Also write a storage offer from this file. |
 | `--sponsor-bin <path>` | Hearth's own | The sponsor to run beside the node: one on `PATH`, else Hearth's own. |

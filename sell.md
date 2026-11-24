@@ -15,13 +15,13 @@ To earn Hearth coin, the market's coin. Hosts earn it, then spend it on hosting 
 - **Orders.** Buyers pay your seller key for each chain you host, by the day.
 - **Block rewards.** The market pays 1,000 coin a block, about one block a minute. Your seller makes market blocks (see [Blocks](#blocks)), and each one it makes pays your sponsor's key. `hearth sweep` moves them to your seller key.
 
-The default price is **10,000 coin per chain per day**, so orders count beside block rewards. The market mints 1,440,000 coin a day (1,000 a block, 1,440 blocks), shared by the sellers making its blocks. With N sellers, each mints about 1,440,000 / N a day:
+The default price is **10,000 coin per chain on the path per day**, so orders count beside block rewards. **The price is per chain on the path.** A host runs every chain from Nexus down to the one it sells, so a buyer pays the price once for each: under `Nexus`, a chain `Nexus/app` costs 2 × 10,000 a day; under `Nexus/testnet`, a chain `Nexus/testnet/app` costs 3 × 10,000. Every buyer pays its whole path. The market mints 1,440,000 coin a day (1,000 a block, 1,440 blocks), shared by the sellers making its blocks. With N sellers, each mints about 1,440,000 / N a day:
 
-| Sellers pacing the market | Block rewards per seller per day | A full default offer (10 chains × 10,000) |
+| Sellers pacing the market | Block rewards per seller per day | A full default offer (10 chains × 2 × 10,000) |
 |---|---|---|
-| 1 | 1,440,000 | 100,000 (7%) |
-| 10 | 144,000 | 100,000 (69%) |
-| 50 | 28,800 | 100,000 (347%) |
+| 1 | 1,440,000 | 200,000 (14%) |
+| 10 | 144,000 | 200,000 (139%) |
+| 50 | 28,800 | 200,000 (694%) |
 
 Set your own price with `--price`.
 
@@ -42,7 +42,7 @@ Already run a node (5.0.0 or newer)? Give its root with `--root`, or `--node` wi
 npx @hearthnet/hearth sell
 ```
 
-This sells hosting for up to 10 small chains under `Nexus` (see [Offer terms](#offer-terms)), at 10,000 market coin per chain per day (`--price 10000/day`; give `--price` to choose another), for 30 days, on the market `Nexus/hearth`. It runs in the foreground.
+This sells hosting for up to 10 small chains under `Nexus` (see [Offer terms](#offer-terms)), at 10,000 market coin per chain on the path per day (`--price 10000/day`; give `--price` to choose another), for 30 days, on the market `Nexus/hearth`. It runs in the foreground.
 
 It checks every flag, and that a node lives at `--root` when you give one, before it writes anything. A `--root` with no node stops with `no node at <root>`. Every subcommand takes `--help`.
 
@@ -57,7 +57,7 @@ It checks every flag, and that a node lives at `--root` when you give one, befor
 5. **Runs the seller** (`host/sell-hosting.mjs`) in the foreground. Beside the node it starts the sponsor (below). Every `--interval` seconds (default 30) it makes one pass:
    1. It adds the market and the offer's parent to its own fragment of the node's configuration, `hostmarket` (`config.d/hostmarket.json`), so the node hosts them.
    2. Once the node has synced the market, it reads the market at its tip and judges its own orders, the same way every reader does.
-   3. Once the key holds enough market coin (see [Funding](#funding)), it writes the offer (and the URL record, if `--url`), then the storage offer, then any changed URL.
+   3. Once the key holds enough market coin (see [Funding](#funding)), it writes the offer (and the URL record, if it has a URL), then the storage offer, then any changed URL. Selling with no URL, it removes a URL record it wrote before.
    4. It creates each owed chain not yet on its parent, once, from the buyer's payload (`POST /chains`), and lists every owed chain in the `hostmarket` fragment.
    5. With `--burn`, it burns what the burned total is missing.
 6. **Makes blocks** on the market and on every chain it hosts for its orders (below).
@@ -85,13 +85,13 @@ The sponsor:
 - sells pins for work at `--storage-rate` bytes per market coin (default 10240), kept until you take them down, up to `--storage-budget` at once (default `256M`; see [Abuse, takedowns and legal](#abuse-takedowns-and-legal));
 - listens on `--sponsor-port` (default 8650).
 
-Without `--sponsor-url` it listens on loopback only, and the offer names no sponsor. With `--sponsor-url https://host.example/sponsor` it listens on every interface (put TLS in front of the port), and the offer names that URL. The URL must be `https`, or `http` on loopback.
+Without `--sponsor-url` it listens on loopback only, and the offer names no sponsor. With `--sponsor-url https://host.example/sponsor` it listens on every interface (put TLS in front of the port), and the offer names that URL. The URL must be `https`, or `http` on loopback. A sponsor URL on the same origin as `--url` is named by its path (`sponsor /sponsor`), so it moves with your URL record. When Hearth makes you reachable (below), the sponsor stays on loopback behind Hearth's proxy.
 
 With `--node` (a remote node) the seller runs no sponsor: a sponsor reaches a node only on its loopback, so run it there.
 
 ## What an offer says
 
-Besides its terms, every offer names `blocks <address>` (the sponsor's key, which its blocks pay) and, with a public sponsor, `sponsor <url>`. Buyers use both to check you; see [Check a host](launch.md#check-a-host).
+Besides its terms, every offer names `blocks <address>` (the sponsor's key, which its blocks pay), `whole path` (the price is per chain on the path) and, with a public sponsor, `sponsor <url>` (an `https` URL, or a path on your URL record's origin). Buyers use both to check you; see [Check a host](launch.md#check-a-host).
 
 ## Rewards: hearth sweep
 
@@ -186,7 +186,7 @@ A deposit someone has paid for says `bought by <address>, who paid you on Nexus`
 
 An offer sells for 30 days from when it is written (or its file's `duration`, in market blocks). It never renews by itself. To sell for another 30 days, run `hearth sell` again: it writes a new version of the offer.
 
-Each write is a **version** of the offer. A version takes effect 10 market blocks after it is written. Each payment is priced by the version in force at the payment's own height, so a new price applies only to orders yet to come. After the first write, the seller writes a new version only when the address its blocks pay or its sponsor changes.
+Each write is a **version** of the offer. A seller from before the price was per chain on the path writes one version with `whole path` when it next runs, and says so: renewals of chains under a child chain then cost more. A version takes effect 10 market blocks after it is written. Each payment is priced by the version in force at the payment's own height, so a new price applies only to orders yet to come. After the first write, the seller writes a new version only when the address its blocks pay or its sponsor changes. A new URL (a tunnel's, each start) changes only the URL record, which counts at once.
 
 Each set of flags names its own offer. Running again with the same flags finds the same offer. Running with other flags writes a new offer beside the old one, and the seller says the old one stays on sale. The seller keeps hosting the parents of all your offers still on sale. With `--id`, the offer file `<id>.json` is written only once: changing other flags with the same `--id` keeps the old terms.
 
@@ -194,7 +194,7 @@ Each set of flags names its own offer. Running again with the same flags finds t
 
 | Flag | Default | What it does |
 |---|---|---|
-| `--price <coin>/<period>` | `10000/day` | Whole market coin per chain per period. The period is a number of market blocks, or `hour`, `day` or `week`, converted to market blocks at the market's block time. Give `--price` or `--offer`, not both. |
+| `--price <coin>/<period>` | `10000/day` | Whole market coin per chain on the path per period. The period is a number of market blocks, or `hour`, `day` or `week`, converted to market blocks at the market's block time. Give `--price` or `--offer`, not both. |
 | `--offer <file>` | none | An offer file, instead of `--price`. |
 | `--parent <path>` | `Nexus` | The chain the offer's chains go under. |
 | `--chains <n>` | `10` | How many chains the offer sells. |
@@ -204,8 +204,10 @@ Each set of flags names its own offer. Running again with the same flags finds t
 | `--node <url>` | none | A node's operator listener, for a seller running elsewhere. Needs `--token-file`. |
 | `--token-file <file>` | none | An operator token for `--node`. |
 | `--key <file>` | `<root>/hearth/seller.json` | The seller's key. Made if missing. With `--node`, the default is `hearth/seller.json` in the current directory. |
-| `--url <url>` | none | Your public read URL. Without it you sell key only. |
-| `--proof <url>` | `<url's origin>/.well-known/lattice.json` | Where your domain lists your address, if not the default. |
+| `--url <url>` | none | Your public read URL. Without it, Hearth makes you reachable (below), on its own node. |
+| `--proof <url>` | `<url's origin>/.well-known/lattice.json` | Where your domain lists your address, if not the default. Only with `--url`. |
+| `--public` | on Hearth's own node with no `--url` | Make this machine reachable through a Cloudflare quick tunnel (below). A node of your own (`--root`) needs it given, and `publicRead` and `publicSubmit` set. |
+| `--key-only` | off | Sell with no URL at all: no tunnel, and a URL record written before is removed. |
 | `--storage-offer <file>` | none | Also write a storage offer from this file. |
 | `--sponsor-bin <path>` | Hearth's own | The sponsor to run. |
 | `--sponsor-port <port>` | `8650` | The port the sponsor listens on. |
@@ -278,9 +280,13 @@ Run it beside the node (Hearth's own, or with `--root`). It asks the sponsor on 
 
 Keep the operator token and the node's cookie to yourself: the seller holds an admin-equivalent credential over the node.
 
-## A domain, or key only
+## Reachable by default, a domain, or key only
 
-**Key only.** Without `--url` you write no URL record. You claim no domain. The web app lists your offers under your key, marked *Key only*, for buyers to judge by your record. It can't probe the chains you serve, since you name no URL.
+**Reachable by default.** A host buyers can't reach takes orders it can't serve: their pages have no URL to read and write the chains at. So on Hearth's own node, with no `--url`, `hearth sell` makes this machine reachable itself. It sets the node's public read port (`publicRead` 8082, taking writes), runs a small proxy that serves that port, your sponsor under `/sponsor` and the `/.well-known/lattice.json` that lists your address, and opens a Cloudflare quick tunnel to it (cloudflared, pinned and checked like the node; no account). It sells with the tunnel's `https://….trycloudflare.com` URL, so your offers show as *Verified*.
+
+The URL changes each time `hearth sell` starts. The seller writes the new one in its URL record, which counts at once; pages that pasted the old URL must copy the new one. Quick tunnels are Cloudflare's free tier, without uptime promises: right for testnets and for trying Hearth. If the tunnel stops, the seller stops too (a service started by `--install` starts both again). With a node of your own, give `--public`; the node must already take public reads and writes on its public read port (Hearth says how). The port Hearth opened is closed again when you later sell with `--url` or `--key-only`; one you set yourself stays.
+
+**Key only.** With `--key-only` (or a node of your own and neither `--url` nor `--public`) you write no URL record. You claim no domain. The web app lists your offers under your key, marked *Key only*, for buyers to judge by your record. It can't probe the chains you serve, since you name no URL.
 
 **A domain.** With `--url https://host.example`, the seller writes a URL record naming your public read URL. Then serve this file at `https://host.example/.well-known/lattice.json`:
 
@@ -295,7 +301,7 @@ hearth sell --url https://host.example \
   --proof https://host.example:8650/.well-known/lattice.json
 ```
 
-The web app fetches the file from the buyer's browser, so serve it with `Access-Control-Allow-Origin: *`. If the domain does not list your address, or the file can't be read, your offers are hidden: anyone could name someone else's URL. A URL record stays once written.
+The web app fetches the file from the buyer's browser, so serve it with `Access-Control-Allow-Origin: *`. If the domain does not list your address, or the file can't be read, your offers are hidden: anyone could name someone else's URL. Selling with no URL removes the record.
 
 Storage offers are offered only from verified hosts.
 

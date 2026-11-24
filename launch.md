@@ -76,7 +76,7 @@ The cheapest per block comes first. You can tick more than one host; each is pai
 | Column | What it shows |
 |---|---|
 | Host | The domain of a verified host, or the start and end of a key-only host's address, marked *Key only*. *Says it makes blocks* and *Says it sponsors writes* when its offer names a `blocks` address and a `sponsor`. |
-| Price | Market coin per period. |
+| Price | Market coin per period, for each chain on the path (Nexus included): a chain under `Nexus/testnet` costs 3 × the price. |
 | Room | Chains the offer can still sell, of how many. |
 | Record | Chains the host has sold, and how many it was *paid, not served*. |
 
@@ -88,7 +88,7 @@ A key-only host names no URL, so the page can't probe it or show you where to re
 
 ## 4. Pay and launch
 
-Set **Periods** (default 7). The cost is each offer's price times the periods, summed over the hosts you chose. You need that plus the fee.
+Set **Periods** (default 7). The cost is each offer's price times the chains on your path times the periods, summed over the hosts you chose. You need that plus the fee.
 
 Press **Launch**. The page reads the market again first, and stops if an offer you chose is gone, has closed, is full, or has new terms since you chose it: check your hosts and launch again. It refuses a path that is already a chain on the parent, or that someone else has ordered at one of these hosts. It also refuses to pay twice: if your account already has an order for this path at one of these hosts (a payment that landed), it says so. Then it writes one transaction that orders your chain at every chosen host and pays each one, priced by the offer version in force at the market's height.
 
