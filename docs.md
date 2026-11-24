@@ -36,10 +36,10 @@ The current market runs on testnet, at `Nexus/testnet/hearth`. The mainnet marke
 
 ## Source
 
-The code is at [github.com/hearthnet/hearth](https://github.com/hearthnet/hearth). The package is `@hearthnet/hearth` and needs Node.js 22 or later. It is not on npm yet; install it from source:
+The code is at [github.com/hearthnet/hearth](https://github.com/hearthnet/hearth). The package is `@hearthnet/hearth` and needs Node.js 22 or later. Install it from npm:
 
 ```
-git clone https://github.com/hearthnet/hearth && npm i -g ./hearth
+npm i -g @hearthnet/hearth
 ```
 
-(`npx @hearthnet/hearth` soon.)
+or run any command with `npx @hearthnet/hearth`.

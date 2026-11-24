@@ -8,10 +8,10 @@ title: CLI reference
 
 This page lists every `hearth` subcommand and flag, as `bin/hearth.mjs` defines them.
 
-Install from source (not on npm yet; `npx @hearthnet/hearth` soon):
+Install it from npm (or run any command with `npx @hearthnet/hearth`):
 
 ```
-git clone https://github.com/hearthnet/hearth && npm i -g ./hearth
+npm i -g @hearthnet/hearth
 ```
 
 ```
