@@ -24,19 +24,19 @@ No. Everything on a chain is public. Anyone can read it from any node that hosts
 
 ### Why would anyone host?
 
-To earn Hearth coin, the market's coin, which pays for hosting and storage from any seller. A host earns it two ways: buyers' orders pay its seller key, and the market blocks it makes pay its sponsor's key (1,000 coin a block). It spends the coin on hosting or storage, or sells it on Lattice's exchange with `hearth sell-coin`. See [Why host](sell.md#why-host).
+To earn Hearth coin, the market's coin, which pays for hosting and storage from any seller. A host earns it two ways: buyers' orders pay its seller key, and the market blocks it makes pay its sponsor's key (1,000 coin a block). It spends the coin on hosting or storage, or sells it on the chains' own exchange with `hearth sell-coin`. See [Why host](sell.md#why-host).
 
 ### Where do I get Hearth coin?
 
-From hosts. They earn it and sell it on Lattice's exchange, and you buy it on the web app's **Buy coin** page with parent-chain coin. Lattice checks both sides, so nobody holds your payment in between. See [Buy market coin](launch.md#1-buy-market-coin).
+From hosts. They earn it and sell it on the chains' own exchange, and you buy it on the web app's **Buy coin** page with parent-chain coin. The chains check both sides, so nobody holds your payment in between. See [Buy market coin](launch.md#1-buy-market-coin).
 
 ### Can a host cancel coin it put on sale?
 
-No. Lattice has no cancel or refund for a deposit. It stays on sale until someone buys it; the host can only buy it back like any buyer. See [Sell your coin](sell.md#sell-your-coin-hearth-sell-coin).
+No. There is no cancel or refund for a deposit. It stays on sale until someone buys it; the host can only buy it back like any buyer. See [Sell your coin](sell.md#sell-your-coin-hearth-sell-coin).
 
 ### Is this on mainnet?
 
-Yes. Hearth runs on Lattice mainnet.
+Yes. Hearth runs on mainnet.
 
 ### Can I get a refund?
 

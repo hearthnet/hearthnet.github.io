@@ -10,7 +10,7 @@ This page describes the market chain, its records, how orders are judged, how co
 
 ## The market chain
 
-The market is a Lattice chain, `Nexus/hearth`.
+The market is a chain, `Nexus/hearth`.
 
 There is no server. Hosts write offers to the market chain, and buyers write orders that pay hosts. The web app and the seller read the same records and judge them with the same code (`client/verdict.mjs`), so they reach the same verdicts.
 
@@ -55,7 +55,7 @@ An offer's value is these lines, in order. Numbers are canonical decimals. The o
 | `maxNumberOfTransactionsPerBlock <n>` | The largest `maxNumberOfTransactionsPerBlock`. |
 | `modules any` or `modules <cid>,<cid>,…` | The policy modules it runs. |
 | `blocks <address>` | Optional. The address the host's blocks pay: its sponsor's key. |
-| `sponsor <url>` | Optional. The host's fee and storage sponsor (lattice-sponsor), `https` or loopback. |
+| `sponsor <url>` | Optional. The host's fee and storage sponsor, `https` or loopback. |
 | `mines <hashes per second>` | Optional, read from old offers only. A mining claim; nothing writes it any more. See [Blocks and mining](mining.md#old-mining-claims). |
 
 An offer whose value is not exactly these lines counts as no offer. `price`, `period` and `capacity` can't be 0. Older offers that end with `blocks mine` or `blocks commit` still parse, without a `blocks` address.
@@ -142,17 +142,17 @@ The seller (`host/sell-hosting.mjs`, which `hearth sell` runs) is a client of a 
 
 The seller also makes zero-work blocks, about one hash each, on the market and on every chain it hosts for its orders, one per target block time, paid to its sponsor's key. Anyone else may mine those chains too. See [Blocks and mining](mining.md).
 
-Beside the node the seller runs lattice-sponsor, which pays fees for visitors who pay with proof-of-work and sells permanent pins for work. Its float is the block rewards. See [Sponsor](sell.md#sponsor).
+Beside the node the seller runs a sponsor, which pays fees for visitors who pay with proof-of-work and sells permanent pins for work. Its float is the block rewards. See [Sponsor](sell.md#sponsor).
 
 ## Buying coin
 
-Hosts are paid in the market chain's own coin. It is bought with the parent chain's coin through Lattice's own exchange, in three steps:
+Hosts are paid in the market chain's own coin. It is bought with the parent chain's coin through the chains' own exchange, in three steps:
 
 1. **Deposit.** A seller locks market coin on the market chain for a price in parent coin. It stays locked until someone pays. There is no cancel.
 2. **Receipt.** A buyer pays that price to the seller on the parent chain, naming the deposit.
 3. **Withdrawal.** The buyer takes the locked coin on the market chain.
 
-Lattice checks both sides, so nobody holds the payment in between, and there is no exchange to trust. Where a fee sponsor pays out parent coin, it can also be earned through the sponsor's payouts.
+The chains check both sides, so nobody holds the payment in between, and there is no exchange to trust. Where a fee sponsor pays out parent coin, it can also be earned through the sponsor's payouts.
 
 ## The trust model
 
