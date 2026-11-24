@@ -64,7 +64,7 @@ Not for what you've paid. Each order asserts the offer unchanged, so it lands on
 
 ### Can someone take my chain's name?
 
-Before you pay, the web app refuses a path that is already a chain under its parent, or that someone else has paid hosts for. The market records only what each host is paid to run; it doesn't decide which genesis holds a path. A buyer may also commit the genesis to the parent chain to secure the name; the web app doesn't do that yet. Nothing protects a chain from a heavier rival chain at the same path.
+Before you pay, the web app refuses a path that is already a chain under its parent, or that someone else has paid hosts for. At one host, a genesis holds its path only while it is paid for; another genesis landing after that takes the path over there. The market records only what each host is paid to run; which chain wins at a path is fork choice. A buyer who wants a path exclusively commits its genesis in the parent chain; the web app doesn't do that yet. Nothing protects a chain from a heavier rival chain at the same path.
 
 ### How long until my chain is up?
 

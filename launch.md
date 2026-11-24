@@ -95,19 +95,19 @@ Press **Launch**. The page:
 1. buys Hearth coin first, if you're short (above);
 2. checks the name: it refuses a path that is already a chain under the parent, or that someone else has paid hosts for;
 3. mints your chain's genesis in this browser, on the parent chain's state now, with the genesis's proof of work (trivial: a genesis has the easiest target);
-4. stops if an offer you chose has closed or has new terms since you chose it: check your hosts and launch again. It also refuses to pay twice: if your account already has an order for this path at one of these hosts, it says so;
+4. stops if an offer you chose has closed or has new terms since you chose it: check your hosts and launch again. It also refuses to pay twice: if your account already has an order for this path at one of these hosts, it says so. And it stops before paying a host that holds this path for another genesis still paid for: pick another name or host;
 5. writes one transaction that orders your chain at every chosen host and pays each one. Each order carries the genesis and asserts the host's offer unchanged, so if a host changes its terms before the payment lands, the market refuses it and nothing is paid.
 
 The order is judged as soon as it is in a block:
 
 - **Owed**: the host runs your chain from that market block until your paid time runs out. Your app's page shows the market blocks it is owed for.
-- **Void**: with the reason (the genesis did not check out, or less than one period was paid for the whole path). The host owes nothing, and the payment is not refunded.
+- **Void**: with the reason (the genesis did not check out, another genesis holds the path at that host while it is paid for, or less than one period was paid for the whole path). The host owes nothing, and the payment is not refunded.
 
-The page shows *Not judged yet* while it can't read the spec of a chain above yours.
+The page shows *Not judged yet* while it can't read the spec of a chain above yours. Specs of chains your node doesn't host are read from nodes the network lists, and trusted.
 
 See [Verdicts](how-it-works.md#verdicts).
 
-**Your chain's name.** A buyer may also commit the genesis to the parent chain to secure the name. The web app doesn't do that yet. Nothing protects a chain from a heavier rival chain at the same path.
+**Your chain's name.** A host holds a path for one genesis only while it is paid for; a different genesis landing after that takes the path over at that host. Which chain wins at a path is fork choice. A buyer who wants a path exclusively commits its genesis in the parent chain. The web app doesn't do that yet. Nothing protects a chain from a heavier rival chain at the same path.
 
 ## 5. Use it
 
@@ -123,13 +123,13 @@ Until a node serves your chain, the page says so and checks again by itself. The
 
 ## 6. Renew
 
-Anyone can pay for more time. On your app's page, under **Keep it running**, set the periods and press **Pay for more**. This writes a `renew` order that pays the host at its offer's terms now. If the offer's terms changed since the page loaded, it stops and asks you to reload. A closed offer sells no more time.
+Anyone can pay for more time. On your app's page, under **Keep it running**, set the periods and press **Pay for more**. This writes a `renew <genesis CID>` order that pays the host for your genesis at its offer's terms now. A renewal naming another genesis than the one holding the path at that host is void, so if another chain has taken the path over there, the page sells no more time for yours. If the offer's terms changed since the page loaded, it stops and asks you to reload. A closed offer sells no more time.
 
 Each renewal adds time from where paid time ends, or from its own block if paid time had run out.
 
 There are no refunds. If a host serves badly, don't renew.
 
-When paid time ends, a host may stop hosting your chain and drop its data. Anyone still hosting it keeps it.
+When paid time ends, a host may stop hosting your chain and drop its data, and another genesis ordered there after that takes the path over at that host. Anyone still hosting yours keeps it.
 
 ## Check a host
 

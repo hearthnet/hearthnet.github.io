@@ -34,7 +34,7 @@ Already run a node? It must be 5.1.0 or newer: the seller hands it each buyer's 
 npx @hearthnet/hearth sell
 ```
 
-This sells hosting at 6,000 market coin per kB/s of block capacity and 600 per kB of state growth, per day, for every chain on a buyer's path, on the market `Nexus/testnet/hearth`. It offers the hash rate its miner measures. It runs in the foreground.
+This sells hosting at 60 market coin per kB/s of block capacity and 6 per kB of state growth, per day, for every chain on a buyer's path, on the market `Nexus/testnet/hearth`. It offers the hash rate its miner measures. It runs in the foreground.
 
 It checks every flag, and that a node lives at `--root` when you give one, before it writes anything. A `--root` with no node stops with `no node at <root>`. Every subcommand takes `--help`.
 
@@ -49,11 +49,11 @@ It checks every flag, and that a node lives at `--root` when you give one, befor
    1. It adds the market to its own fragment of the node's configuration, `hostmarket` (`config.d/hostmarket.json`), so the node hosts it.
    2. Once the node has synced the market, it starts the miner (see [Mining](#mining)).
    3. Once the key holds enough market coin (see [Funding](#funding)), it starts the sponsor and writes the offer, or changes it in place when its terms differ from what the market says.
-   4. It reads the market at its tip and judges its own orders, the same way every reader does. It lists every owed chain, with every chain above it, in the `hostmarket` fragment, and starts each owed chain from the genesis its order carries: it pins the genesis on the node and hands it the genesis block with its proof of work. It tries again each pass until the node takes it.
+   4. It reads the market at its tip and judges its own orders, the same way every reader does. It lists every owed chain, with every chain above it, in the `hostmarket` fragment, and starts each owed chain from the genesis its order carries: it pins the genesis on the node and hands it the genesis block with its proof of work. It tries again each pass until the node takes it. It pushes each paid genesis once and keeps the path hosted; when another genesis takes the path over at your host, it pushes that one too. Which chain wins at the path is Lattice's fork choice.
    5. With `--burn`, it burns what the burned total is missing.
 5. **Reports** each pass (see [Status](#status)).
 
-A chain whose paid time ran out is left out of the fragment. The node stops hosting it unless another layer of its configuration lists it; what it stored stays. The seller never restarts the node. A failed pass is logged and tried again on the next one.
+A chain whose paid time ran out is left out of the fragment. The node stops hosting it unless another layer of its configuration lists it; what it stored stays, but for the genesis pins no owed chain needs, which the seller unpins. It unpins only what its own launches pinned (recorded in `launch-pins-<market>.json` beside its key), and nothing while a chain it hosts has an order not judged yet; such a chain stays listed. Doubt never drops a hosted chain. Run one seller per node: a seller knows only its own launches. The seller never restarts the node. A failed pass is logged and tried again on the next one.
 
 ## Your offer
 

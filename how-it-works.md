@@ -34,7 +34,7 @@ What a record's value says is judged off chain, by every reader the same way.
 | Key | Written by | Value |
 |---|---|---|
 | `offer/<host>/<id>` | the host: written, changed in place, deleted to close | The offer's five lines (below). |
-| `order/<host>/<id>/<payer>/<n>/<paid>/<path>` | the payer, once; pays the host `<paid>` and asserts the offer unchanged in the same transaction | The chain's genesis, or `renew` to pay for more time. |
+| `order/<host>/<id>/<payer>/<n>/<paid>/<path>` | the payer, once; pays the host `<paid>` and asserts the offer unchanged in the same transaction | The chain's genesis, or `renew <genesis CID>` to pay for more time on that genesis. |
 
 ### Offers
 
@@ -75,11 +75,11 @@ An order's value is the chain's genesis as the buyer minted it in the web app: s
 | `genesis` | The genesis block's CID. |
 | `volumes` | The genesis block, its state and its spec, as base64 archives by root CID. |
 | `modules` | The spec's policy modules, base64 by CID: exactly the spec's. |
-| `proofs` | The genesis's proof of work: base64 child-only proofs. A genesis has the easiest target, so this is trivial to make. |
+| `proofs` | The genesis's proof of work: base64 child-only proofs, each proving this genesis at the order's path, with its work. A genesis has the easiest target, so this is trivial to make. |
 
 Strict JSON means no duplicate keys, and every number a plain integer. One value has one reading.
 
-An order whose value is `renew` pays for more time on a chain already ordered at that offer.
+An order whose value is `renew <genesis CID>` pays for more time on that genesis, at a host that already runs it at that path.
 
 ## Verdicts
 
@@ -87,20 +87,24 @@ An order is judged as soon as it is in a block, at the offer's terms in that blo
 
 | Verdict | Meaning |
 |---|---|
-| **void** | The buyer's fault: the offer's terms don't parse, the genesis does not check out (a volume that does not match its CID, a block that is not a genesis, a spec missing or out of range, modules that are not exactly the spec's), or less than one period paid for the whole path. The host owes nothing, and the coin is not refunded. |
+| **void** | The buyer's fault: the path is not under Nexus, or is the market or a chain above it; the offer's terms don't parse; the genesis does not check out (a malformed value, a volume that does not match its CID, a block that is not a genesis, volumes other than exactly the genesis's own, a spec missing or out of range or with a size of 0, modules that are not exactly the spec's, or proofs that do not verify and carry work for this genesis at this path); another genesis holds the path at that host and is still paid for (below); a renewal that names no genesis, or another genesis than the one holding the path at that host; or less than one period paid for the whole path, renewals included. An order that cannot be judged is void, not the rest. The host owes nothing, and the coin is not refunded. |
 | **owed** | The host runs the chain from the block the order landed in until its paid time runs out. |
 
-A reader that could not yet read the spec of a chain above the ordered one can't price the order, and shows it as *not judged yet* until it can.
+A reader that could not yet read the spec of a chain above the ordered one can't price the order, and shows it as *not judged yet* until it can. The page and the seller read those specs from their own node, else from the nodes the network lists for the chain. A price read from a listed node is trusted, not checked, and read again every ten minutes.
 
-A renewal with no owed order before it for the same chain at the same offer is void.
+**One genesis per path at a host.** The first owed order for a path at a host, at any of its offers, holds the path there for its genesis while it is paid for. Another genesis landing at that host and path before then is void. One landing after the paid time ends holds the path from then on. Orders in the same block go in key order.
 
-**Paid time.** A chain's owed order and its renewals at one offer, oldest first, each add `floor(paid ÷ price) × period` market blocks, at the price and period of the terms it landed on. Each adds them from where paid time ends, or from its own block if paid time had run out.
+A renewal pays for the genesis it names. It is void without an owed order before it at that host and path, or if it names another genesis than the one holding the path there when it lands.
 
-The market records only what each seller is paid to run. Which genesis holds a path is up to the chains themselves (the work behind it), not the market. A buyer may also commit the genesis to the parent chain to secure the name; the web app doesn't do that yet.
+**Paid time.** A genesis's owed orders and its renewals at one host (any of its offers), oldest first, each add `floor(paid ÷ price) × period` market blocks, at the price and period of the terms it landed on. Each adds them from where paid time ends, or from its own block if paid time had run out.
+
+The market records only what each seller is paid to run. Which genesis holds a path on Lattice is up to the chains themselves (the work behind it), not the market. A buyer who wants a path exclusively commits its genesis in the parent chain; the web app doesn't do that yet.
 
 ## What a host does
 
-The seller (`host/sell-hosting.mjs`, which `hearth sell` runs) is a client of a node's operator API. Each pass, at the market's tip, it reads its own orders and judges them. It lists the market and every owed chain, with every chain above it, in its fragment of the node's configuration, `hostmarket`. Then it starts each owed chain from the genesis its order carries: it pins the genesis's volumes and modules on the node, and hands the node the genesis block with its proofs (`POST /child-blocks`). From there it mines the chain on. A chain whose paid time ran out is left out of the fragment, and the node stops hosting it unless another layer lists it.
+The seller (`host/sell-hosting.mjs`, which `hearth sell` runs) is a client of a node's operator API. Each pass, at the market's tip, it reads its own orders and judges them. It lists the market and every owed chain, with every chain above it, in its fragment of the node's configuration, `hostmarket`. Then it starts each owed chain from the genesis its order carries: it pins the genesis's volumes and modules on the node, and hands the node the genesis block with its proofs (`POST /child-blocks`). It pushes each paid genesis once and keeps the path hosted: when another genesis takes a path over at that host, it is pushed too. Which chain wins at the path is Lattice's fork choice. From there it mines the chain on.
+
+A chain whose paid time ran out is left out of the fragment, and the node stops hosting it unless another layer lists it. What it stored stays, but for the genesis pins no owed chain needs: the seller unpins only those its own launches pinned, and none while a chain it hosts has an order not judged yet (that chain stays listed). Doubt never drops a hosted chain. One node runs one seller, since a seller knows only its own launches. The node never restarts for any of this.
 
 The seller mines every chain the node hosts, all the time, paid to its sponsor's key. Anyone else may mine those chains too. See [Blocks and mining](mining.md).
 
@@ -135,6 +139,6 @@ The chains check both sides, so nobody holds the payment in between, and there i
 - buy and serve its own chains to raise its count;
 - with most of the market chain's mining, reorder the market's recent blocks.
 
-**A node you read from can** withhold records, serve an old tip, or misreport balances and block data, which come from its API. Read from your own node with `?node=`.
+**A node you read from can** withhold records, serve an old tip, or misreport balances and block data, which come from its API. A listed node can misreport the spec, and so the price, of a chain above your path that your own node doesn't host. Read from your own node with `?node=`.
 
 **A buyer does not get:** the chain's mining rewards (they go to whoever makes its blocks: the host's sponsor, or other miners), blocks after `hearth stop --now` (`hearth stop` keeps paid chains hosted and mined until their time ends), protection from a heavier rival chain at the same path, a refund, proof the host stores rather than relays, or a record of past uptime.
