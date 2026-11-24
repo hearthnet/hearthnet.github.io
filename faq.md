@@ -24,7 +24,7 @@ No. Everything on a chain is public. Anyone can read it from any node that hosts
 
 ### Why would anyone host?
 
-To earn Hearth coin, the market's coin, which pays for hosting and storage from any seller. A host earns it two ways: buyers' orders pay its seller key, and the market blocks it makes pay its sponsor's key (1,000 coin a block). It spends the coin on hosting or storage, or sells it on the chains' own exchange with `hearth sell-coin`. See [Why host](sell.md#why-host).
+To earn Hearth coin, the market's coin, which pays for hosting from any seller. A host earns it two ways: buyers' orders pay its seller key, and the market blocks it mines pay its sponsor's key (1,000 coin a block). It spends the coin on hosting, or sells it on the chains' own exchange with `hearth sell-coin`. See [Why host](sell.md#why-host).
 
 ### Where do I get Hearth coin?
 
@@ -36,7 +36,7 @@ No. There is no cancel or refund for a deposit. It stays on sale until someone b
 
 ### Is this on mainnet?
 
-Yes. Hearth runs on mainnet.
+The current market runs on testnet, at `Nexus/testnet/hearth`. The mainnet market, `Nexus/hearth`, still runs the previous market until it is relaunched.
 
 ### Can I get a refund?
 
@@ -44,31 +44,31 @@ No. There are no refunds. Your recourse is renewal: if a host serves badly, don'
 
 ### What if the host doesn't launch my chain?
 
-The page shows it: the order stays *owed* but not *Launched*, and the host's *Serving now* count shows it. If the host was full or the path was taken, the order counts against the host as *paid, not served*. You don't get the coin back.
+The page shows it: your app's page finds no node serving your chain, and the host's *delivered* hash rate on it stays at nothing. The order is still *owed*, and you don't get the coin back. Don't renew with that host. Ordering from two hosts at once keeps your app up if one fails.
 
 ### Does the host make my chain's blocks?
 
-Yes. Every host makes zero-work blocks, about one per target block time, on each chain it hosts, so your chain lives without miners. Anyone else may mine it too, you included. See [Blocks and mining](mining.md).
+Yes. Every host mines every chain it hosts, all the time, with all of its hash rate: the rate its offer claims. Anyone else may mine it too, you included. See [Blocks and mining](mining.md).
 
 ### Who gets my chain's mining rewards?
 
-Whoever makes its blocks. A host's blocks pay its sponsor's key, which spends them on your visitors' write fees.
+Whoever makes its blocks. A host's blocks pay its sponsor's key, which spends them on the write fees of visitors who pay with work.
 
 ### Do my visitors need coin to write?
 
-No, if your hosts run a public sponsor. The sponsor pays the write fee, and the visitor's device does a few seconds of proof-of-work instead. Without a sponsor, the writer needs coin on your chain.
+Not if you add a fee sponsor to your app. Sponsoring is a separate service, not part of a host's offer: add a sponsor's URL as `sponsors` in your app's code. The sponsor pays the write fee, and the visitor's device does a few seconds of proof-of-work instead. Without a sponsor, the writer needs coin on your chain; your account holds the coin your app started with.
 
 ### Can a host change its price after I pay?
 
-No. Each payment is priced by the offer version in force at its own height, and a new version takes effect only 10 market blocks after it is written.
+Not for what you've paid. Each order asserts the offer unchanged, so it lands only on the terms you saw; if the host changes them first, the order is refused and nothing is paid. Paid time keeps the terms it landed on. A renewal pays the offer's terms at the time you renew.
 
 ### Can someone take my chain's name?
 
-Before you pay, the web app refuses a path that is already a chain, or that someone else has ordered at the host. If two orders at one host name the same path with different payloads, the earlier one wins and the later one is *taken*. Nothing protects a chain from a heavier rival chain at the same path.
+Before you pay, the web app refuses a path that is already a chain under its parent, or that someone else has paid hosts for. At one host, a genesis holds its path only while it is paid for; another genesis landing after that takes the path over there. The market records only what each host is paid to run; which chain wins at a path is fork choice. A buyer who wants a path exclusively commits its genesis in the parent chain; the web app doesn't do that yet. Nothing protects a chain from a heavier rival chain at the same path.
 
 ### How long until my chain is up?
 
-An order settles 16 market blocks after it is written. The host then creates the chain on its next pass. Paid time counts from the order's own block.
+An order is judged as soon as it is in a block (the market makes about one a minute). The host starts your chain from the genesis your order carries on its next pass (every 30 seconds by default). Paid time counts from the order's own block.
 
 ## Burns
 
@@ -94,18 +94,14 @@ No. It burns only what the burned total is missing, up to the amount. Once the t
 
 ## Blocks
 
-### How do I check that a host makes my chain's blocks?
+### How do I check that a host mines what it claims?
 
-On the **Hosts** tab and on your chain's page, the web app looks for a block paying the host's `blocks` address within max(24 hours, 10 target block times). Open it with `?node=<your node's read URL>` to read the blocks from your own node. See [Blocks and mining](mining.md#how-a-buyer-checks-the-blocks).
-
-### Why does a check say "unknown"?
-
-The page reads back at most 1000 blocks. On a chain fast enough to have more in the window, a check that finds no block from the host before that cap says *unknown*, not that the host is not serving.
+On the **Hosts** tab, each offer shows the hash rate it *claims* and what its blocks *delivered*: the lowest hash rate its `blocks` address was credited with over the last day (at most 200 blocks), across up to three chains it is paid to host. Your app's page shows the same for each of your hosts on your own chain. See [Blocks and mining](mining.md#how-a-buyer-checks-the-hash-rate).
 
 ### Can a host fake its blocks?
 
 Not on your own node. Each block proves its work and names who it credits; your node checks both. Elsewhere: if your app pins its first block or a checkpoint, every value is checked against a block whose headers link back to it. One node alone can still serve old or made-up data; with two or more nodes run by different operators, a value is shown only from a block at least two of them report holding (in lattice-sdk, pass `connect` your app's `genesis` or a `checkpoint`, and a list of nodes). Your own node is the simplest check.
 
-### What if a host stops making blocks?
+### What if a host mines less than it claims, or stops?
 
 Don't renew. That is the only recourse.

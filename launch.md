@@ -8,13 +8,13 @@ title: Launch a chain
 
 This page shows how to launch your app's chain from the Hearth web app, keep it running, and check its hosts.
 
-You don't run a node. You buy market coin, pay one or more hosts for some periods, and each host builds your chain's genesis from your spec, stores it, serves it at its URL and makes its blocks.
+You don't run a node. You describe your chain, the page mints its first block (its genesis) in your browser, and you pay one or more hosts for some periods. The order carries the genesis; each host starts your chain from it, stores it and mines it.
 
-Each host makes your chain's blocks: zero-work blocks, about one per target block time, so the chain lives without miners. Each host also runs a sponsor, so your visitors can write with a few seconds of their device's work instead of coin. Anyone else may mine your chain too. See [Blocks and mining](mining.md).
+The web app uses the current market, on testnet at `Nexus/testnet/hearth`. The mainnet market, `Nexus/hearth`, still runs the previous market until it is relaunched, and the page doesn't read its offers.
 
 ## The web app
 
-The web app is one page with five tabs: **Launch a chain**, **Buy coin**, **Hosts**, **Storage** and **Your chains**.
+The web app is one page with four tabs: **Launch an app**, **Buy coin**, **Hosts** and **Your apps**.
 
 Your account is a key kept in this browser. The app makes it the first time you buy or launch. It holds your coin and signs your orders. Download it from your account page (`#/wallet`) to keep it: anyone with the file can spend from it. You can also load a key file there, from `lattice key generate` or one downloaded earlier.
 
@@ -23,14 +23,15 @@ The page takes these settings in its URL:
 | Parameter | What it sets |
 |---|---|
 | `?node=` | The node it reads from and sends to. Point it at your own node's read URL. Without it, the page finds one (below). |
-| `?entry=` | A node hosting Nexus that the page asks for the market's nodes. Default `https://rpc.lattice.build`. |
-| `?market=` | The market chain. Default `Nexus/hearth`. Another network's market (testnet) also needs that network's `?node=` or `?entry=`. |
+| `?entry=` | A node hosting Nexus that the page asks for the market's nodes, and every other chain's. Default `https://rpc.lattice.build`. |
+| `?market=` | The market chain. Default `Nexus/testnet/hearth`. |
+| `?genesis=` | The market's genesis, for a `?market=` the page doesn't know. A node serving another chain at that path is never read as the market. |
 | `?sponsor=` | A fee sponsor that pays out parent coin for work. None by default; **Earn with this device** shows only when one is given. |
 | `?blockSeconds=` | Seconds per market block, used only to show durations. Default `60`. |
 
 ## 1. Buy market coin
 
-Hosts are paid in the market chain's own coin, Hearth coin. Hosts earn it, and sell what they don't spend with `hearth sell-coin` (see [Sell your coin](sell.md#sell-your-coin-hearth-sell-coin)). On **Buy coin**, the page lists coin that sellers have locked on the market chain, each lot for a price in the parent chain's coin (Nexus coin). The cheapest per coin comes first.
+Hosts are paid in the market chain's own coin, Hearth coin. Hosts earn it, and sell what they don't spend with `hearth sell-coin` (see [Sell your coin](sell.md#sell-your-coin-hearth-sell-coin)). On **Buy coin**, the page lists coin that sellers have locked on the market chain, each lot for a price in the parent chain's coin (for the testnet market, `Nexus/testnet` coin). The cheapest per coin comes first.
 
 Press **Buy** on a lot. The page then:
 
@@ -39,90 +40,100 @@ Press **Buy** on a lot. The page then:
 3. takes the coin on the market chain (a withdrawal);
 4. waits for the coin to land.
 
-The fee for taking the coin comes out of it, so you get the lot less one coin at the minimum fee. If you reload, the purchase picks up where it left off.
+The fee for taking the coin comes out of it, so you get the lot less the fee. If you reload, the purchase picks up where it left off.
+
+You don't have to buy first: when you launch short of Hearth coin, **Launch** buys it for you from the cheapest sale that covers what you lack, then pays the hosts. What's left over stays in your account.
 
 You need parent coin to pay. Anyone holding some can send it to your address. Where a fee sponsor pays out parent coin, you can also earn it with **Earn with this device**: your browser does work for the fee sponsor, which pays your address each time your earnings reach its payout.
 
-You can also sell market coin from the same tab: lock an amount for a price in parent coin. It stays locked until someone pays. There is no cancel.
+You can also sell Hearth coin from the same tab: lock an amount for a price in parent coin. It stays locked until someone pays. There is no cancel.
 
 See [How it works](how-it-works.md#buying-coin) for the deposit, receipt and withdrawal.
 
-## 2. Describe your chain
+## 2. Describe your app
 
-On **Launch a chain**, under **1. Your chain**:
+On **Launch an app**, under **1. Your app**:
 
 | Field | What it does |
 |---|---|
-| Name | Lowercase letters, digits and dashes, up to 40, starting with a letter or digit. The chain's path is the offer's parent plus this name, for example `Nexus/my-app`. |
-| Size | A preset. **Small app**: 30 s blocks, 20 kB blocks, 10 kB state growth, 100 transactions per block (what a host sells by default). **Busy app (needs a seller with bigger limits)**: 5 s blocks, 1,000 kB blocks, 1 MB state growth, 1,000 transactions per block. No seller's default offer fits it; it fits only offers whose limits are at least this big. |
-| Coin you start with | Paid to your account in the genesis. Writes pay fees from it, unless a sponsor pays them. Rounded up to a multiple of 100, the block reward. Default 21,000. |
+| App name | Lowercase letters, digits and dashes, up to 40, starting with a letter or digit. The chain's path is the chain it goes under plus this name, for example `Nexus/testnet/my-app`. |
 | Who can write | A rules preset: **Anyone can write** (any key); **Each person edits only their own keys** (every key ends with its writer's address); **Append-only (write once)** (anyone adds a key, nobody changes it after); or **Upload your own .wasm** (your own policy modules). |
 
-Each block pays 100 coin on your chain to whoever makes it. A host's blocks pay its sponsor, which spends it on your visitors' write fees.
+Under **Advanced**:
 
-The rules are fixed at launch: they are part of the genesis.
+| Field | What it does |
+|---|---|
+| Under the chain | The chain yours goes under. Default: the market's parent (`Nexus/testnet`). Hosts run every chain from Nexus down to yours, and the price covers each. |
+| Size | A preset. **Small app**: 30 s blocks, 20 kB blocks, 10 kB of new state a block, 100 transactions a block. **Busy app**: 5 s blocks, 1,000 kB blocks, 1 MB of new state a block, 1,000 transactions a block. Or set each number yourself. |
+| Coin your app starts with | Paid to your account in the genesis. Writes pay fees from it. Rounded up to a multiple of 100, the block reward. Default 21,000. |
+
+Each block pays 100 coin on your chain to whoever mines it.
+
+The rules are fixed at launch: they are part of the genesis. To change them, launch a new app.
+
+Hosts price block capacity and state growth, so a bigger or faster chain costs more. See [Price](how-it-works.md#price).
 
 ## 3. Choose hosts
 
-Under **2. Hosts** the page lists the offers that take your chain, one per host (its cheapest with room). An offer is listed when:
-
-- its host is **Verified** or **Key only** (below);
-- it ends more than 16 market blocks from now;
-- your chain's size is within its limits;
-- it runs your policy modules, or any.
-
-The cheapest per block comes first. You can tick more than one host; each is paid separately. A full offer is shown but can't be chosen, and nor can an offer under another parent than the first you chose.
+Under **2. Hosts** the page lists every open offer, one per host (its cheapest), priced for your chain and every chain above it. The cheapest per market block comes first. When two hosts are open, the page picks two for you: if one stops, the other keeps your app online. You can tick others. Each is paid separately.
 
 | Column | What it shows |
 |---|---|
-| Host | The domain of a verified host, or the start and end of a key-only host's address, marked *Key only*. *Says it makes blocks* and *Says it sponsors writes* when its offer names a `blocks` address and a `sponsor`. |
-| Price | Market coin per period, for each chain on the path (Nexus included): a chain under `Nexus/testnet` costs 3 × the price. |
-| Room | Chains the offer can still sell, of how many. |
-| Record | Chains the host has sold, and how many it was *paid, not served*. |
+| Host | The host's address. |
+| Price | Market coin per period, for all the chains on the path (Nexus included), each priced by its own spec. |
+| Hash rate | The rate the host *claims* in its offer, and what its blocks *delivered* (see [Check a host](#check-a-host)). |
+| Record | Chains the host has sold, and how many it hosts now. |
 
-**Verified or key only.** A verified host's domain lists its address at `/.well-known/lattice.json`. A key-only host has written no URL at all: it claims no name, so you judge it by its record. A host whose URL record fails the check is hidden. Anyone could name someone else's URL, so the page never offers it.
-
-A key-only host names no URL, so the page can't probe it or show you where to read your chain. Read your chain from your own node.
-
-**Burns.** The **Hosts** tab shows the coin burned for each host, on each chain from Nexus down to the market, chain by chain. A new host with no record shows its burns in place of a record. A burn costs whoever made it. It says nothing about how a host serves. See [Burns](burns.md).
+**Burns.** The **Hosts** tab shows the coin burned for each host, on each chain from Nexus down to the market, chain by chain. A burn costs whoever made it. It says nothing about how a host serves. See [Burns](burns.md).
 
 ## 4. Pay and launch
 
-Set **Periods** (default 7). The cost is each offer's price times the chains on your path times the periods, summed over the hosts you chose. You need that plus the fee.
+Set **Periods** (default 7). The cost is each chosen offer's price times the periods, summed over the hosts you chose. You need that plus the fee.
 
-Press **Launch**. The page reads the market again first, and stops if an offer you chose is gone, has closed, is full, or has new terms since you chose it: check your hosts and launch again. It refuses a path that is already a chain on the parent, or that someone else has ordered at one of these hosts. It also refuses to pay twice: if your account already has an order for this path at one of these hosts (a payment that landed), it says so. Then it writes one transaction that orders your chain at every chosen host and pays each one, priced by the offer version in force at the market's height.
+Press **Launch**. The page:
 
-Your chain's page then shows three steps:
+1. buys Hearth coin first, if you're short (above);
+2. checks the name: it refuses a path that is already a chain under the parent, or that someone else has paid hosts for;
+3. mints your chain's genesis in this browser, on the parent chain's state now, with the genesis's proof of work (trivial: a genesis has the easiest target);
+4. stops if an offer you chose has closed or has new terms since you chose it: check your hosts and launch again. It also refuses to pay twice: if your account already has an order for this path at one of these hosts, it says so. And it stops before paying a host that holds this path for another genesis still paid for: pick another name or host;
+5. writes one transaction that orders your chain at every chosen host and pays each one. Each order carries the genesis and asserts the host's offer unchanged, so if a host changes its terms before the payment lands, the market refuses it and nothing is paid.
 
-1. **Paid**: the order is on the market chain.
-2. **Settled**: 16 market blocks after the order. From then on every reader judges it the same way.
-3. **Launched**: the host serves a chain at your path whose genesis is the one you paid for, checked from your browser.
+The order is judged as soon as it is in a block:
 
-Paid time counts from the order's own block. The host owes the chain from the order's block plus 16 until the paid time runs out or the offer ends, whichever is first.
+- **Owed**: the host runs your chain from that market block until your paid time runs out. Your app's page shows the market blocks it is owed for.
+- **Void**: with the reason (the genesis did not check out, another genesis holds the path at that host while it is paid for, or less than one period was paid for the whole path). The host owes nothing, and the payment is not refunded.
 
-If the order is void, or the host was full, or the path was taken, the page says why. See [Verdicts](how-it-works.md#settlement-and-verdicts).
+The page shows *Not judged yet* while it can't read the spec of a chain above yours. Specs of chains your node doesn't host are read from nodes the network lists, and trusted.
+
+See [Verdicts](how-it-works.md#verdicts).
+
+**Your chain's name.** A host holds a path for one genesis only while it is paid for; a different genesis landing after that takes the path over at that host. Which chain wins at a path is fork choice. A buyer who wants a path exclusively commits its genesis in the parent chain. The web app doesn't do that yet. Nothing protects a chain from a heavier rival chain at the same path.
 
 ## 5. Use it
 
-Once launched, **Use it** shows where to read and write (the host's read URL), the chain's height and latest block, and whether each host you ordered from made a block of it lately (see [Blocks and mining](mining.md#how-a-buyer-checks-the-blocks)).
+Your app's page (under **Your apps**) shows, once a node serves your genesis:
 
-**Test write** writes one key to your chain and reads it back, checking what it reads against the chain. When your hosts name sponsors, they pay the write fee: the writer's device does a few seconds of work instead. Otherwise the writer needs coin on your chain.
+- the nodes serving it, found through the network, and its height;
+- the hosts you ordered it from, and for each the hash rate its blocks were credited over the last day on your chain, beside what it claims;
+- code to paste into any web page. It writes one key and reads it back, checking what it reads against a pinned block (your genesis, or a recent block once the chain is older). With more than one node, it reads a block only once two of them hold it.
 
-The code to paste into your own page appears here once a release of the SDK is tagged. Test write works now.
+**Test write** does the same from the page. Writes pay their fee in your chain's coin from the writing key: your account holds the coin your app started with. A fee sponsor, a separate service, can pay instead: add its URL as `sponsors` in the code.
+
+Until a node serves your chain, the page says so and checks again by itself. The host starts it from the genesis your order carries on its next pass.
 
 ## 6. Renew
 
-Anyone can pay for more time. On your chain's page, under **Keep it running**, set the periods and press **Pay for more**. This writes a `renew` order that pays the host, priced by the offer version in force. If the offer's price or period changed since the page loaded, it stops and asks you to reload.
+Anyone can pay for more time. On your app's page, under **Keep it running**, set the periods and press **Pay for more**. This writes a `renew <genesis CID>` order that pays the host for your genesis at its offer's terms now. A renewal naming another genesis than the one holding the path at that host is void, so if another chain has taken the path over there, the page sells no more time for yours. If the offer's terms changed since the page loaded, it stops and asks you to reload. A closed offer sells no more time.
 
-Offers sell for 30 days at a time, and a host extends one by writing it again. Time past the offer's end is never owed. The page warns you when the offer ends before your paid time would. A closed offer sells no more time.
+Each renewal adds time from where paid time ends, or from its own block if paid time had run out.
 
 There are no refunds. If a host serves badly, don't renew.
 
-When paid time ends, a host may stop hosting your chain and drop its data. Anyone still hosting it keeps it.
+When paid time ends, a host may stop hosting your chain and drop its data, and another genesis ordered there after that takes the path over at that host. Anyone still hosting yours keeps it.
 
 ## Check a host
 
-By default the page finds the market's nodes through the network: it asks a Nexus node (`?entry=`) for the read URLs the market's hosts declare, keeps those that take transactions and whose market has the market's first block (genesis), and uses the fastest; with none, it reads from the entry itself. It reads from and sends to that one node (today `https://rpc.hearthnet.io`). If your app pins its first block or a checkpoint, every value is checked against a block whose headers link back to it. One node alone can still serve old or made-up data; with two or more nodes run by different operators, a value is shown only from a block at least two of them report holding (in lattice-sdk, pass `connect` your app's `genesis` or a `checkpoint`, and a list of nodes). One node can also withhold records. Burns and block reads come from the node's API.
+By default the page finds the market's nodes through the network: it asks a Nexus node (`?entry=`) for the nodes the market's hosts declare, keeps those that take transactions and whose market has the market's genesis, and uses the fastest; with none, it reads from the entry itself. It reads from and sends to that one node. One node can serve old or made-up data, or withhold records. Burns come from the node's API.
 
 To trust only yourself, run a node that hosts the market and open the page with:
 
@@ -130,43 +141,16 @@ To trust only yourself, run a node that hosts the market and open the page with:
 ?node=<your node's read URL>
 ```
 
-Then the market, burns and your chains' blocks all come from your node. The **Serving now** probes still go to each host's URL, and the **Listed by its sponsor** check to its sponsor's URL, since that is what they test. That sponsor sees your browser's IP address.
-
 On **Hosts**, each host shows:
 
 | Field | What it means |
 |---|---|
-| Verified / Key only / Not verified | Whether its domain lists its address. |
-| Burned | Coin burned for it, per chain, as read from the node. |
-| Serving now | Of the chains it owes, how many it serves with the right genesis, checked from your browser. |
-| Listed by its sponsor | The sponsor its offer names (an `https` URL, or loopback) answers `GET /terms` bound to this host: the sponsor's own address is the offer's `blocks` address, and it pays this host. This checks the host is up and consistent, not that it hosts anything. |
-| Makes its chains' blocks | Of up to three chains it is paid to run, how many have a block paying its `blocks` address within max(24 hours, 10 target block times). *Unknown* when the chain made more blocks in that window than the 1000 the page reads back. |
-| Paid, not served | Orders it took after its offer was full, or for a path it had given to another chain. |
-| Void | Orders whose buyer broke the offer's terms. |
+| Chains sold | Its owed orders, and how many it hosts now. |
+| Void orders | Orders whose buyer's order did not hold up. |
+| Burned for it | Coin burned for it, per chain, as read from the node. |
+| Your chain | Each offer's price for the chain set on **Launch**, per period. |
+| Rates | The offer's throughput and storage prices. |
+| Hash rate | *Claims*: the offer's `hashrate`, the rate it says it mines every chain it hosts with. *Delivered*: the lowest hash rate its `blocks` address was credited with over the last day (at most 200 blocks), across up to three chains it is paid to host now, read by CID from a node serving each chain's genesis. |
+| Blocks pay | The offer's `blocks` address. |
 
-"Serving now" measures availability now. It does not prove the host stores the chain, and it is not a record of past uptime.
-
-## Storage offers
-
-Some hosts also sell storage: they keep files for good, paid once in market coin. The **Storage** tab lists these offers:
-
-| Column | What it shows |
-|---|---|
-| Host | Its domain, and whether it is verified. |
-| Price | Market coin per MiB, for good. |
-| Room | MiB left of the offer's capacity. |
-| Files kept | Files ordered there and owed. |
-| Checked now | Up to five of its newest files, and how many its node holds itself. |
-
-Storage offers need a verified domain. The host's storage sponsor must also be paid to the host's address, at the offer's rate.
-
-To store a file, upload it to each host's sponsor, then order it at every host in one transaction. Each order pays its host. Then claim each payment at its sponsor, which pins the file. Nothing is ever unpinned. Store a file at several hosts so it outlives any one of them.
-
-The source repo has `tools/store.mjs`, which does all of this for one file of up to 1 MiB, at every verified storage offer:
-
-```
-node tools/store.mjs --key buyer.json --file photo.png \
-  [--node <read URL>] [--market Nexus/hearth] [--offer <host>/<id> ...] [--min 1]
-```
-
-`--min` is how many verified offers it needs. It refuses to run with fewer.
+A host that mines less than it claims shows it here; don't renew with it. *Delivered* measures the last day, not past uptime, and it does not prove the host stores the chain. See [Blocks and mining](mining.md).

@@ -12,7 +12,7 @@ This page explains how a host burns coin to show it has something at stake, and 
 
 A new host has no record. Buyers can't judge it by chains it has served. It can show it has something at stake by burning coin: sending it to an address nobody can spend from, named for the host.
 
-A burn costs whoever made it. It says nothing about how a host serves. It is one more thing a buyer can weigh, beside the host's record and its domain.
+A burn costs whoever made it. It says nothing about how a host serves. It is one more thing a buyer can weigh, beside the host's record and the hash rate its blocks deliver.
 
 ## The burn address
 
@@ -28,12 +28,13 @@ The burned total on a chain is the burn address's balance on that chain, 0 if it
 
 ## Which chains count
 
-Burns count on each chain from Nexus down to the market:
+Burns count on each chain from Nexus down to the market. For the testnet market:
 
 | Chain | Coin |
 |---|---|
 | `Nexus` | Nexus coin |
-| `Nexus/hearth` | market coin |
+| `Nexus/testnet` | testnet coin |
+| `Nexus/testnet/hearth` | market coin |
 
 Each chain's coin is its own. The web app shows burns per chain and never adds them together.
 
@@ -71,6 +72,6 @@ The **Hosts** tab reads each host's burn address balance on each chain from the 
 GET /api/state/account/<burn address>?chainPath=<path>
 ```
 
-A host with no record shows its burns in place of a record. A host with a record shows them under its name. Each line names the node it was read from.
+Each host's card shows them under *Burned for it*, chain by chain.
 
 The balance comes from the node's API, not from a record checked by CID. To be sure of it, open the web app with `?node=<your node's read URL>` and read it from your own node.
