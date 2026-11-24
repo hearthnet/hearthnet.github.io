@@ -6,15 +6,15 @@ title: Blocks and mining
 
 # Blocks and mining
 
-This page explains who makes a hosted chain's blocks, where the rewards go, and how a buyer checks that a host makes them.
+This page explains who makes a hosted chain's blocks, where the rewards go, and how a buyer checks that a host mines what it claims.
 
-## Hosts make zero-work blocks
+## Hosts mine every chain they host
 
-Every seller makes blocks on the market and on every chain it hosts for its orders. Each is a zero-work block: about one hash, made with the seller's processor. There is no flag; the seller always does it.
+Every seller mines every chain its node hosts, all the time, with this machine's processor. There is no flag; the seller always does it.
 
-The seller paces each chain: a chain is due once its tip is one target block time (`targetBlockTime`, from the chain's spec) old, from anyone's block. Then the seller asks its node for a template, searches nonces up to that chain's target, and submits the hit. So a chain gets about one block per target block time with no miner at all. A chain that other miners or other hosts keep moving needs nothing from the seller. A chain the node is still syncing is never paced, and after a miss a chain waits its whole target block time.
+Each round it asks its node for a template that carries every hosted chain, searches nonces, and submits each hit. One hash makes a block on every chain whose target it clears, so every chain gets all of the seller's hashes. Each chain's difficulty (ASERT) settles where the miners on it make its blocks on time.
 
-**Early blocks.** A template carries every chain the node hosts, and one hash makes a block on each chain whose target it clears. On a node whose template requests take `exclude`, each round leaves out every chain that is not due and has none due below it, so those get no early block. A due chain's parents are carried with it, so a parent with an easier target can still get an early block; ASERT difficulty adjustment hardens it back toward its target block time. On a node without `exclude`, the seller falls back: it skips a hash that would also clear a harder chain not yet due, but it can't keep a hash off an easier chain not yet due, since any hash that clears the due chain clears that one too. So there an easier chain can get some early blocks.
+The seller measures its hash rate each minute and logs it (`miner: <n> hashes per second`). That is the rate its offer claims: the offer's `hashrate` line is `--hashrate` when you give it, else the rate measured over the miner's first minute. The offer waits for that first minute.
 
 ## Rewards go to the sponsor's key
 
@@ -22,25 +22,19 @@ Every block the seller makes pays its sponsor's key (`<root>/hearth/sponsor.json
 
 To move rewards above a float to the seller's address, run `hearth sweep` with the seller stopped. See [Rewards](sell.md#rewards-hearth-sweep).
 
-Each hosting offer names the address its blocks pay, as its line `blocks <address>`.
+Each offer names the address its blocks pay, as its line `blocks <address>`. That is how buyers find a host's work.
 
 ## Anyone can mine
 
-Anyone else may mine a hosted chain too, for its block reward. A miner merged-mines the chains its node hosts. A buyer who wants the rewards of their own chain can mine it.
+Anyone else may mine a hosted chain too, for its block reward. A buyer who wants the rewards of their own chain can mine it.
 
-## How a buyer checks the blocks
+## How a buyer checks the hash rate
 
-The web app checks, from the buyer's browser, that a host makes its chains' blocks (`client/service.mjs`):
+An offer's `hashrate` is only a claim. Each block proves its work and names who it credits, so the web app measures what a host's blocks delivered (`client/mining.mjs`): it sums the expected hashes behind each block (2^256 ÷ (target + 1)) credited to the offer's `blocks` address, over the window.
 
-- **serving**: the offer's `blocks` address is credited on the chain within the last max(24 hours, 10 target block times). The blocks are read from the node the page reads from (`?node=`), by CID along their parent links, from the tip back. The read stops at 1000 blocks: on a chain fast enough to have more in that window, a check that finds no credit before the cap says *unknown*, not that the host is not serving.
-- **live**, separately: the chain has a block, from anyone, within its last three target block times.
+- On **Hosts** and on **Launch**, *delivered* is the lowest hash rate the host's `blocks` address was credited with over the last day (at most 200 blocks), across up to three chains it is paid to host now. Each chain is read by CID from a node serving its genesis.
+- On your app's page, under **Use it**, each host you ordered from shows the hash rate it was credited with on your chain over the last day, beside what it claims.
 
-Every clock comparison allows two minutes of slack, since block timestamps are the miner's clock.
+A host that delivers less than it claims shows it there; don't renew with it.
 
-The **Hosts** tab shows *Makes its chains' blocks* for up to three chains a host is paid to run. On your own chain's page, under **Use it**, the app says for each host you ordered from whether it made a block in the window, and whether the chain has a recent block.
-
-Open the web app with `?node=<your node's read URL>` to read the blocks from your own node. Your node checks every block's work and recipient.
-
-## Old mining claims
-
-Older offers could claim a hashrate with a line `mines <hashes per second>`. That line still parses, and the **Hosts** tab still shows it, but nothing writes it any more. For a host with such a claim, on chains you bought there, the page shows the hashrate the chain's blocks credit the host over the last day or 100 blocks, beside the claim. A claim was never enforced: verdicts never read it.
+The blocks come from whichever node the page finds serving the chain's genesis. A node checks every block's work and recipient before it serves it; to be sure of them, run your own node that hosts the chain and read its blocks there.

@@ -10,7 +10,7 @@ This page describes the market chain, its records, how orders are judged, how co
 
 ## The market chain
 
-The market is a chain, `Nexus/hearth`.
+The market is a chain. The current market runs on testnet at `Nexus/testnet/hearth`. The mainnet market, `Nexus/hearth`, still runs the previous market until it is relaunched.
 
 There is no server. Hosts write offers to the market chain, and buyers write orders that pay hosts. The web app and the seller read the same records and judge them with the same code (`client/verdict.mjs`), so they reach the same verdicts.
 
@@ -22,11 +22,10 @@ The market chain's policy (`policy/src/lib.rs`) only filters keys and coin. It n
 
 | Key | The policy requires |
 |---|---|
-| `offer/<host>/<id>/<height>` | The host signs. Written once. `<height>` is within the last 10 blocks. |
-| `url/<host>` | The host signs. |
-| `order/<host>/<id>/<payer>/<height>/<paid>/<path>` | The payer signs. Written once. `<height>` is within the last 10 blocks. `<paid>` is more than 0, and the host is credited `<paid>` in the same transaction. |
+| `offer/<host>/<id>` | The host signs to write, change or delete it. Anyone may assert it unchanged (the same value before and after), which the chain refuses unless the offer still holds exactly those bytes. |
+| `order/<host>/<id>/<payer>/<n>/<paid>/<path>` | The payer signs. Written once. `<paid>` is more than 0, and the host is credited `<paid>` in the same transaction, which also asserts `offer/<host>/<id>` unchanged. |
 
-`<host>` and `<payer>` are addresses. `<height>` and `<paid>` are canonical decimals. `<path>` is one or more non-empty segments. Every other key is refused. Transfers, deposits, receipts and withdrawals pass untouched.
+`<host>` and `<payer>` are addresses. `<n>` and `<paid>` are canonical decimals; `<n>` tells one payer's orders apart. `<path>` is one or more non-empty segments. Every other key is refused. Transfers, deposits, receipts and withdrawals pass untouched.
 
 What a record's value says is judged off chain, by every reader the same way.
 
@@ -34,115 +33,78 @@ What a record's value says is judged off chain, by every reader the same way.
 
 | Key | Written by | Value |
 |---|---|---|
-| `offer/<host>/<id>/<height>` | the host, once per height: each is a version of the offer | A hosting offer, or a storage offer (below). |
-| `url/<host>` | the host | Its public read URL, optionally followed by a line `proof <url>`. |
-| `order/<host>/<id>/<payer>/<height>/<paid>/<path>` | anyone, once; pays the host `<paid>` in the same transaction | The chain's payload, or `renew` to pay for more time, or `bytes <n>` for a storage order. |
+| `offer/<host>/<id>` | the host: written, changed in place, deleted to close | The offer's five lines (below). |
+| `order/<host>/<id>/<payer>/<n>/<paid>/<path>` | the payer, once; pays the host `<paid>` and asserts the offer unchanged in the same transaction | The chain's genesis, or `renew` to pay for more time. |
 
-### Hosting offers
+### Offers
 
-An offer's value is these lines, in order. Numbers are canonical decimals. The offer's `created` height is the one in its key.
+An offer's value is exactly these five lines, in this order. Numbers are canonical decimals.
 
 | Line | Meaning |
 |---|---|
-| `parent <path>` | The chain its chains go under. |
-| `price <coin>` | Market coin per period. |
-| `period <blocks>` | The period, in market blocks. |
-| `until <height>` | The market height the offer ends at. |
-| `capacity <n>` | How many chains it sells. |
-| `maxBlockSize <bytes>` | The largest `maxBlockSize` a chain's spec may have. |
-| `maxStateGrowth <bytes>` | The largest `maxStateGrowth`. |
-| `minTargetBlockTime <ms>` | The smallest `targetBlockTime`. |
-| `maxNumberOfTransactionsPerBlock <n>` | The largest `maxNumberOfTransactionsPerBlock`. |
-| `modules any` or `modules <cid>,<cid>,…` | The policy modules it runs. |
-| `blocks <address>` | Optional. The address the host's blocks pay: its sponsor's key. |
-| `sponsor <url>` | Optional. The host's fee and storage sponsor, `https` or loopback. |
-| `mines <hashes per second>` | Optional, read from old offers only. A mining claim; nothing writes it any more. See [Blocks and mining](mining.md#old-mining-claims). |
+| `hashrate <n>` | Hashes per second the host mines with. It mines every chain it hosts with all of it, so each chain gets the full rate. A claim, not a price: buyers check it against the blocks (see [Blocks and mining](mining.md)). |
+| `throughput <n>` | Market coin per kB/s of block capacity, per period. A chain's block capacity is `maxBlockSize ÷ targetBlockTime`. |
+| `storage <n>` | Market coin per kB of `maxStateGrowth`, per period. |
+| `period <n>` | Market blocks a period lasts, at least 1. |
+| `blocks <address>` | The address the host's blocks pay. Buyers find its work by it. |
 
-An offer whose value is not exactly these lines counts as no offer. `price`, `period` and `capacity` can't be 0. Older offers that end with `blocks mine` or `blocks commit` still parse, without a `blocks` address.
+An offer whose value is not exactly these lines counts as no offer.
 
-### Offer versions
+There is no URL, no limit on chain size, no capacity and no parent. A host hosts any path. Sponsoring writers is a separate service, not part of an offer.
 
-Each `offer/<host>/<id>/<height>` record is a version of the offer `<host>/<id>`. A version takes effect 10 market blocks after the height it is written at. Since a key may name any of the last 10 heights, a host that sees an order could still write a version keyed below it, but never one in force at it.
+The host changes its offer by writing it again in place, and closes it by deleting it (`hearth stop`). Since every order asserts the offer unchanged, an order lands only on the terms it was priced at: if the host changes or deletes the offer first, the order is refused and nothing is paid.
 
-An order goes by the newest version in force at its own height, so a host can change its terms only for orders yet to come. Each payment, order or renewal, is priced by the version in force at its height. An order where no version is in force yet is void.
+### Price
 
-A version whose `until` is its own height closes the offer (`hearth stop`). An offer ends at the latest `until` any version names, so a close never cuts short time paid before it.
+One chain costs, per period:
 
-`hearth sell` writes an offer to sell for 30 days. Nothing renews it: the host runs `hearth sell` again to write a new version.
-
-### URL records
-
-`url/<host>` holds the host's public read URL. A second line `proof <url>` says where the host's domain lists its sellers. Without it, that is `<read URL's origin>/.well-known/lattice.json`. The proof must be `https`, on the read URL's hostname, at the path `/.well-known/lattice.json`. The file is:
-
-```json
-{ "sellers": ["<address>", "..."] }
+```
+ceil(throughput × maxBlockSize ÷ targetBlockTime) + ceil(storage × maxStateGrowth ÷ 1000)
 ```
 
-Readers trust a host only when its domain lists its address, as Nostr's NIP-05 does for names. A host with no URL record is *key only*: it names no domain, so it impersonates no one. A host whose URL record fails the check is hidden.
+with `maxBlockSize` and `maxStateGrowth` in bytes and `targetBlockTime` in milliseconds, all from the chain's spec. A host runs every chain from Nexus down to the one ordered, so an order pays for each of them, Nexus included, each priced by its own spec. The total is at least 1.
+
+For example, at 6,000 per kB/s and 600 per kB, a chain with 20 kB blocks every 30 s and 10 kB of state growth costs 4,000 + 6,000 = 10,000 a period. The chains above it add their own prices.
 
 ### Orders
 
-An order's value is the chain's payload: one JSON object with exactly the keys `spec`, `premineTo`, `modules` and `genesisTransactions`.
+An order's value is the chain's genesis as the buyer minted it in the web app: strict JSON with exactly these keys.
 
-- `spec` is a chain spec's nine fields, in range, with integers only.
-- `premineTo` names an account exactly when the spec has a premine, and is `null` otherwise.
-- `modules` maps each policy module's CID to its bytes, in base64.
-- `genesisTransactions` is a list of signed transactions.
-
-The payload is strict JSON: no duplicate keys, and every number a plain integer. One payload has one reading.
-
-An order whose value is `renew` pays for more time on a chain already ordered.
-
-### Storage offers and orders
-
-A storage offer is an `offer/` record whose value is these lines:
-
-| Line | Meaning |
+| Key | What it holds |
 |---|---|
-| `kind storage` | Marks a storage offer. |
-| `sponsor <https url>` | The host's storage sponsor. |
-| `bytesPerCoin <n>` | Bytes kept for good per market coin. |
-| `capacity <bytes>` | Bytes it sells in all. |
-| `until <height>` | When it ends. |
+| `genesis` | The genesis block's CID. |
+| `volumes` | The genesis block, its state and its spec, as base64 archives by root CID. |
+| `modules` | The spec's policy modules, base64 by CID: exactly the spec's. |
+| `proofs` | The genesis's proof of work: base64 child-only proofs. A genesis has the easiest target, so this is trivial to make. |
 
-A storage order is an `order/` record at a storage offer. Its path is the file's root CID, and its value is `bytes <n>`, the size the sponsor counted. It pays the host `ceil(n / bytesPerCoin)`. A buyer can order a file at several hosts in one transaction.
+Strict JSON means no duplicate keys, and every number a plain integer. One value has one reading.
 
-A storage offer is trusted only when the host's domain lists its address, and its sponsor's `GET /terms` has `payTo` set to the host's address and the offer's `bytesPerCoin` as its rate for the market.
+An order whose value is `renew` pays for more time on a chain already ordered at that offer.
 
-## Settlement and verdicts
+## Verdicts
 
-An order is judged once it is 16 market blocks old: the 10-block window for its height, plus six confirmations. By then no order or offer can land ahead of it. Until then it is *pending*.
-
-Settled orders are judged oldest first, from the order's own bytes and the offer:
+An order is judged as soon as it is in a block, at the offer's terms in that block (the ones it asserted). Nothing waits: the verdict is final then.
 
 | Verdict | Meaning |
 |---|---|
-| **void** | The buyer broke the offer's terms: no such offer, no version in force at its height yet, a close in force there, created outside the offer's time, paid less than one period, a path not directly under the offer's parent, a payload that does not parse, a spec over the offer's limits, a module the offer does not run, or modules that are not exactly the spec's. |
-| **full** | The offer had already sold its chains. |
-| **taken** | The path holds another genesis, or an earlier order at this host named the path with another payload. |
-| **owed** | The host serves the chain from 16 blocks after the order until its paid time runs out or the offer ends, whichever is first. |
+| **void** | The buyer's fault: the offer's terms don't parse, the genesis does not check out (a volume that does not match its CID, a block that is not a genesis, a spec missing or out of range, modules that are not exactly the spec's), or less than one period paid for the whole path. The host owes nothing, and the coin is not refunded. |
+| **owed** | The host runs the chain from the block the order landed in until its paid time runs out. |
 
-Full and taken are not the buyer's fault, and the host can cause both. Readers count them against the host as *paid, not served*.
+A reader that could not yet read the spec of a chain above the ordered one can't price the order, and shows it as *not judged yet* until it can.
 
-**Paid time.** A chain's orders and renewals at one offer, oldest first, each add `floor(paid / price)` periods, at the price and period in force at the payment's own height. Each adds them from where paid time ends, or from its own height if paid time had run out.
+A renewal with no owed order before it for the same chain at the same offer is void.
 
-**Storage orders** are judged apart:
+**Paid time.** A chain's owed order and its renewals at one offer, oldest first, each add `floor(paid ÷ price) × period` market blocks, at the price and period of the terms it landed on. Each adds them from where paid time ends, or from its own block if paid time had run out.
 
-| Verdict | Meaning |
-|---|---|
-| **void** | Created outside the offer's time, a path that is not one root CID, a value that is not `bytes <n>`, or paid for fewer bytes than it names. |
-| **full** | The offer's earlier owed orders already fill its capacity. |
-| **owed** | Kept for good. A storage sponsor never unpins. |
-
-A root ordered again at the same offer counts its bytes once.
+The market records only what each seller is paid to run. Which genesis holds a path is up to the chains themselves (the work behind it), not the market. A buyer may also commit the genesis to the parent chain to secure the name; the web app doesn't do that yet.
 
 ## What a host does
 
-The seller (`host/sell-hosting.mjs`, which `hearth sell` runs) is a client of a node's operator API. Each pass it reads its own orders and judges them. For each owed chain not yet on its parent, it creates the chain once from the payload. It lists every owed chain in its fragment of the node's configuration, `hostmarket`. A chain whose paid time ran out is left out, and the node stops hosting it unless another layer lists it.
+The seller (`host/sell-hosting.mjs`, which `hearth sell` runs) is a client of a node's operator API. Each pass, at the market's tip, it reads its own orders and judges them. It lists the market and every owed chain, with every chain above it, in its fragment of the node's configuration, `hostmarket`. Then it starts each owed chain from the genesis its order carries: it pins the genesis's volumes and modules on the node, and hands the node the genesis block with its proofs (`POST /child-blocks`). From there it mines the chain on. A chain whose paid time ran out is left out of the fragment, and the node stops hosting it unless another layer lists it.
 
-The seller also makes zero-work blocks, about one hash each, on the market and on every chain it hosts for its orders, one per target block time, paid to its sponsor's key. Anyone else may mine those chains too. See [Blocks and mining](mining.md).
+The seller mines every chain the node hosts, all the time, paid to its sponsor's key. Anyone else may mine those chains too. See [Blocks and mining](mining.md).
 
-Beside the node the seller runs a sponsor, which pays fees for visitors who pay with proof-of-work and sells permanent pins for work. Its float is the block rewards. See [Sponsor](sell.md#sponsor).
+Beside the node the seller also runs a sponsor, which pays fees for visitors who pay with proof-of-work and sells pins for work. Its float is the block rewards. The offer doesn't name it. See [Sponsor](sell.md#sponsor).
 
 ## Buying coin
 
@@ -160,19 +122,19 @@ The chains check both sides, so nobody holds the payment in between, and there i
 
 - its records, or anyone else's: every record is checked against its CID;
 - a verdict: every reader judges the same bytes the same way;
-- the genesis of a chain it serves: the page checks it against the payload the buyer paid for;
-- the work in a chain's blocks, or who they credit: your node checks every block, so *Makes its chains' blocks* holds when read from your own node;
+- your chain's genesis: you minted it, and the page looks only for nodes serving that genesis;
+- the work in a chain's blocks, or who they credit: your node checks every block, so the hash rate a host *delivered* holds when read from your own node;
 - its burns: they are balances on chain.
 
 **A host can:**
 
-- take an order and not serve it. It shows as *paid, not served* only when the offer was full or the path was taken; otherwise it shows in *Serving now*;
-- serve a chain now and stop later. *Serving now* measures availability now, not past uptime;
+- take an order and not serve it. The page then finds no node serving your chain, or the host's delivered hash rate falls short of its claim;
+- claim more hash rate than it mines. The **Hosts** tab shows what its blocks delivered beside the claim;
+- serve a chain now and stop later;
 - relay a chain instead of storing it;
-- pass *Listed by its sponsor* without hosting anything: its own sponsor answers for its own address;
 - buy and serve its own chains to raise its count;
-- with most of the market chain's mining, reorder the market past the 16-block settlement.
+- with most of the market chain's mining, reorder the market's recent blocks.
 
 **A node you read from can** withhold records, serve an old tip, or misreport balances and block data, which come from its API. Read from your own node with `?node=`.
 
-**A buyer does not get:** the chain's mining rewards (they go to whoever makes its blocks: the host's sponsor, or other miners), blocks after `hearth stop --now` (`hearth stop` keeps paid chains hosted and their blocks made until their time ends), protection from a heavier rival chain at the same path, a refund, proof the host stores rather than relays, or a record of past uptime.
+**A buyer does not get:** the chain's mining rewards (they go to whoever makes its blocks: the host's sponsor, or other miners), blocks after `hearth stop --now` (`hearth stop` keeps paid chains hosted and mined until their time ends), protection from a heavier rival chain at the same path, a refund, proof the host stores rather than relays, or a record of past uptime.
